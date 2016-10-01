@@ -52,6 +52,7 @@
             this.buttonAddArt.TabIndex = 1;
             this.buttonAddArt.Text = "Add Art";
             this.buttonAddArt.UseVisualStyleBackColor = true;
+            this.buttonAddArt.Click += new System.EventHandler(this.buttonAddArt_Click);
             // 
             // buttonCheckCategory
             // 
@@ -61,6 +62,7 @@
             this.buttonCheckCategory.TabIndex = 2;
             this.buttonCheckCategory.Text = "Check Category";
             this.buttonCheckCategory.UseVisualStyleBackColor = true;
+            this.buttonCheckCategory.Click += new System.EventHandler(this.buttonCheckCategory_Click);
             // 
             // buttonBrowse
             // 
@@ -70,6 +72,7 @@
             this.buttonBrowse.TabIndex = 3;
             this.buttonBrowse.Text = "Browse";
             this.buttonBrowse.UseVisualStyleBackColor = true;
+            this.buttonBrowse.Click += new System.EventHandler(this.buttonBrowse_Click);
             // 
             // linkExit
             // 
@@ -80,6 +83,7 @@
             this.linkExit.TabIndex = 4;
             this.linkExit.TabStop = true;
             this.linkExit.Text = "Exit";
+            this.linkExit.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkExit_LinkClicked);
             // 
             // MainForm
             // 
@@ -93,6 +97,7 @@
             this.Controls.Add(this.labelTitle);
             this.Name = "MainForm";
             this.Text = "Form1";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.ResumeLayout(false);
             this.PerformLayout();
 

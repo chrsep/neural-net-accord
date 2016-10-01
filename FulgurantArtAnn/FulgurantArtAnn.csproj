@@ -45,6 +45,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddArtForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AddArtForm.Designer.cs">
+      <DependentUpon>AddArtForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="BrowseForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="BrowseForm.Designer.cs">
+      <DependentUpon>BrowseForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CheckCategoryForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CheckCategoryForm.Designer.cs">
+      <DependentUpon>CheckCategoryForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

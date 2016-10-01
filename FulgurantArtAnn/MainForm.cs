@@ -14,7 +14,39 @@ namespace FulgurantArtAnn
     {
         public MainForm()
         {
+            StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
+        }
+
+        private void buttonAddArt_Click(object sender, EventArgs e)
+        {
+            var form = new AddArtForm();
+            form.Show();
+            Hide();
+        }
+
+        private void buttonCheckCategory_Click(object sender, EventArgs e)
+        {
+            var form = new CheckCategoryForm();
+            form.Show();
+            Hide();
+        }
+
+        private void buttonBrowse_Click(object sender, EventArgs e)
+        {
+            var form = new BrowseForm();
+            form.Show();
+            Hide();
+        }
+
+        private void linkExit_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+           Close();
+        }
+
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+           Application.Exit();
         }
     }
 }
