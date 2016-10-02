@@ -34,7 +34,7 @@ namespace FulgurantArtAnn
 
         private void buttonBrowse_Click(object sender, EventArgs e)
         {
-            var form = new BrowseForm();
+            var form = new BrowseForm(this);
             form.Show();
             Hide();
         }

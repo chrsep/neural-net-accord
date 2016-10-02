@@ -53,6 +53,7 @@
             this.labelLinkBack.TabIndex = 1;
             this.labelLinkBack.TabStop = true;
             this.labelLinkBack.Text = "back";
+            this.labelLinkBack.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.labelLinkBack_LinkClicked);
             // 
             // imageList1
             // 
@@ -78,6 +79,7 @@
             this.Controls.Add(this.labelTitle);
             this.Name = "BrowseForm";
             this.Text = "BrowseForm";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.BrowseForm_FormClosed);
             this.ResumeLayout(false);
             this.PerformLayout();
 
