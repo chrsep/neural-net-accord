@@ -27,7 +27,7 @@ namespace FulgurantArtAnn
 
         private void buttonCheckCategory_Click(object sender, EventArgs e)
         {
-            var form = new CheckCategoryForm();
+            var form = new CheckCategoryForm(this);
             form.Show();
             Hide();
         }
