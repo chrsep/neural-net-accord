@@ -13,12 +13,14 @@ namespace FulgurantArtAnn
     public partial class BrowseForm : Form
     {
         private readonly Form _parentForm;
+        private readonly NeuralEngine _engine;
 
         public BrowseForm(Form parent)
         {
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
             _parentForm = parent;
+            _engine = NeuralEngine.Instance;
         }
 
         private void BrowseForm_FormClosed(object sender, FormClosedEventArgs e)
