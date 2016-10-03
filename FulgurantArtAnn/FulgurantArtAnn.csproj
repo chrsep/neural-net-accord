@@ -81,8 +81,14 @@
     <Compile Include="NeuralEngine.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="AddArtForm.resx">
+      <DependentUpon>AddArtForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="BrowseForm.resx">
       <DependentUpon>BrowseForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CheckCategoryForm.resx">
+      <DependentUpon>CheckCategoryForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
