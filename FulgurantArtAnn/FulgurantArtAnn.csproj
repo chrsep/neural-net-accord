@@ -35,6 +35,9 @@
     <Reference Include="Accord">
       <HintPath>..\lib\net45\Accord.dll</HintPath>
     </Reference>
+    <Reference Include="Accord.Imaging">
+      <HintPath>..\lib\net45\Accord.Imaging.dll</HintPath>
+    </Reference>
     <Reference Include="Accord.IO">
       <HintPath>..\lib\net45\Accord.IO.dll</HintPath>
     </Reference>
