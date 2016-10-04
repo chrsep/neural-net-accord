@@ -35,6 +35,9 @@
     <Reference Include="Accord">
       <HintPath>..\lib\net45\Accord.dll</HintPath>
     </Reference>
+    <Reference Include="Accord.Imaging">
+      <HintPath>..\lib\net45\Accord.Imaging.dll</HintPath>
+    </Reference>
     <Reference Include="Accord.IO">
       <HintPath>..\lib\net45\Accord.IO.dll</HintPath>
     </Reference>
@@ -86,6 +89,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="BrowseForm.resx">
       <DependentUpon>BrowseForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CheckCategoryForm.resx">
+      <DependentUpon>CheckCategoryForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
