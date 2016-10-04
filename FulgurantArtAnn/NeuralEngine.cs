@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using Accord.Imaging.Converters;
 using AForge.Imaging.Filters;
@@ -14,62 +15,66 @@ namespace FulgurantArtAnn
     class NeuralEngine 
     {
         private static NeuralEngine _instance;
-        private DistanceNetwork _distanceNetwork;
-        private ActivationNetwork _activationNetwork;
+        private readonly DistanceNetwork _recognizerNetwork;
+        private readonly ActivationNetwork _similarityNetwork;
 
         private NeuralEngine()
         {
-            var imageToArrayConverter = new ImageToArray(min: -1, max: +1);
-            var grayscale = new Grayscale(0, 0, 0);
-            var scaling = new ResizeBicubic(10, 10);
-            double[][] data = new double[][] {};
             try
             {
-                _activationNetwork = Network.Load("BPNNBrain.net") as ActivationNetwork;
-                _distanceNetwork = Network.Load("SOMBrain.net") as DistanceNetwork;
-            }
-            catch (FileNotFoundException)
-            {
-                _activationNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 100, 1);
-                _distanceNetwork = new DistanceNetwork(100, 100);
-            }
+                _similarityNetwork = Network.Load("BPNNBrain.net") as ActivationNetwork;
+                _recognizerNetwork = Network.Load("SOMBrain.net") as DistanceNetwork;
 
-            try
-            {
                 var files = Directory.GetFiles("images/", "*.jpg", SearchOption.AllDirectories);
-                var i = 0;
-                data = new double[files.Length][];
-                foreach (var file in files)
-                {
-                    double[] pixelArray;
-                    var image = Image.FromFile(file) as Bitmap;
-                    image = grayscale.Apply(image);
-                    image = scaling.Apply(image);
-                    imageToArrayConverter.Convert(image, out data[i]);
-                    i++;
-                }
-            }catch(DirectoryNotFoundException) { }
-
-            var bpnn = new BackPropagationLearning(_activationNetwork);
-            int epoch = 1000000;
-            double desiredError = 0.01;
-            var finalerror = 0d;
-            for (int i = 0; i < epoch; i++)
-            {
-                double error =
-                    bpnn.RunEpoch(data, data);
-
-                if (error < desiredError)
-                    break;
-
-                if (i%200000 == 0)
-                    finalerror = error;
+                var data = PreprocessImageFromFiles(files);
+                var error = TrainSimilarityNetwork(data, data);
+                MessageBox.Show(error.ToString(CultureInfo.InvariantCulture));
             }
-            MessageBox.Show(finalerror.ToString(CultureInfo.InvariantCulture));
+            catch (Exception)
+            {
+                _similarityNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 100, 1);
+                _recognizerNetwork = new DistanceNetwork(100, 100);
+            }
         }
 
         public static NeuralEngine Instance => _instance ?? (_instance = new NeuralEngine());
 
+        public double[][] PreprocessImageFromFiles(string[] files)
+        {
+            var imageToArrayConverter = new ImageToArray(min: -1, max: +1);
+            var grayscale = new Grayscale(0, 0, 0);
+            var scaling = new ResizeBicubic(10, 10);
+            var result = new double[files.Length][];
+            var i = 0;
+            foreach (var file in files)
+            {
+                var image = Image.FromFile(file) as Bitmap;
+                image = grayscale.Apply(image);
+                image = scaling.Apply(image);
+                imageToArrayConverter.Convert(image, out result[i]);
+                i++;
+            }
+            return result;
+        }
 
+        public double TrainSimilarityNetwork(double[][] input, double[][] output, int epoch = 10000)
+        {
+            var bpTrainer = new BackPropagationLearning(_similarityNetwork);
+            var error = 0d;
+            for (var i = 0; i < epoch; i++)
+            {
+                error = bpTrainer.RunEpoch(input, output);
+            }
+            return error;
+        }
+
+        public void TrainRecognizerNetwork(double[][] input, int epoch = 10000)
+        {
+            var somTrainer = new SOMLearning(_recognizerNetwork);
+            for (var i = 0; i < epoch; i++)
+            {
+                somTrainer.RunEpoch(input);
+            }
+        }
     }
 }
