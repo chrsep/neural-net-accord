@@ -16,7 +16,7 @@ namespace FulgurantArtAnn
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new AddArtForm(null));
+            Application.Run(new MainForm());
         }
     }
 }

@@ -24,11 +24,6 @@ namespace FulgurantArtAnn
             {
                 _similarityNetwork = Network.Load("BPNNBrain.net") as ActivationNetwork;
                 _recognizerNetwork = Network.Load("SOMBrain.net") as DistanceNetwork;
-
-                var files = Directory.GetFiles("images/", "*.jpg", SearchOption.AllDirectories);
-                var data = PreprocessImageFromFiles(files);
-                var error = TrainSimilarityNetwork(data, data);
-                MessageBox.Show(error.ToString(CultureInfo.InvariantCulture));
             }
             catch (Exception)
             {
@@ -43,6 +38,8 @@ namespace FulgurantArtAnn
         {
             var imageToArrayConverter = new ImageToArray(min: -1, max: +1);
             var grayscale = new Grayscale(0, 0, 0);
+            var threshold = new Threshold();
+            var reduceNoise = new AdditiveNoise();
             var scaling = new ResizeBicubic(10, 10);
             var result = new double[files.Length][];
             var i = 0;
@@ -50,6 +47,8 @@ namespace FulgurantArtAnn
             {
                 var image = Image.FromFile(file) as Bitmap;
                 image = grayscale.Apply(image);
+                image = threshold.Apply(image);
+                image = reduceNoise.Apply(image);
                 image = scaling.Apply(image);
                 imageToArrayConverter.Convert(image, out result[i]);
                 i++;
@@ -62,19 +61,18 @@ namespace FulgurantArtAnn
             var bpTrainer = new BackPropagationLearning(_similarityNetwork);
             var error = 0d;
             for (var i = 0; i < epoch; i++)
-            {
                 error = bpTrainer.RunEpoch(input, output);
-            }
             return error;
         }
 
-        public void TrainRecognizerNetwork(double[][] input, int epoch = 10000)
+        public double TrainRecognizerNetwork(double[][] input, int epoch = 10000)
         {
             var somTrainer = new SOMLearning(_recognizerNetwork);
+            var error = 0d;
             for (var i = 0; i < epoch; i++)
-            {
-                somTrainer.RunEpoch(input);
-            }
+                error = somTrainer.RunEpoch(input);
+            return error;
         }
+
     }
 }

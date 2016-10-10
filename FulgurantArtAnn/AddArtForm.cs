@@ -63,6 +63,7 @@ namespace FulgurantArtAnn
         private void BackLblLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             _parentForm.Show();
+            Hide();
         }
 
         private void ViewArt_SelectedIndexChanged(object sender, EventArgs e)

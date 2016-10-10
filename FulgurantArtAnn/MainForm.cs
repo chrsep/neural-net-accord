@@ -20,7 +20,7 @@ namespace FulgurantArtAnn
 
         private void buttonAddArt_Click(object sender, EventArgs e)
         {
-            var form = new AddArtForm(null);
+            var form = new AddArtForm(this);
             form.Show();
             Hide();
         }
