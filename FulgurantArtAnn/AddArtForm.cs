@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -11,8 +12,8 @@ namespace FulgurantArtAnn
         private readonly NeuralEngine _engine;
 
         private readonly Form _parentForm;
-        private string[] _paths;
-        private string[] _fileNames;
+        private List<string> _paths;
+        private List<string> _fileNames;
 
         public AddArtForm(Form parent)
         {
@@ -20,7 +21,8 @@ namespace FulgurantArtAnn
             InitializeComponent();
             _parentForm = parent;
             _engine = NeuralEngine.Instance;
-            _paths = new string[0];
+            _paths = new List<string>();
+            _fileNames = new List<string>();
             var availableCategories = Directory.GetDirectories("pictures").ToList();
             availableCategories = availableCategories.Select(paths => new DirectoryInfo(paths).Name).ToList();
             availableCategories.Add("Add new categories");
@@ -30,26 +32,24 @@ namespace FulgurantArtAnn
 
         private void AddNewArt_Click(object sender, EventArgs e)
         {
-            if (dialog.ShowDialog() == DialogResult.OK)
+            if (dialog.ShowDialog() != DialogResult.OK) return;
+            _paths.AddRange(dialog.FileNames.ToList());  
+            _fileNames.AddRange(dialog.SafeFileNames);
+            
+            imageList.Images.Clear();
+            foreach (var path in _paths)
+                imageList.Images.Add(Image.FromFile(path));
+
+            ViewArt.Clear();
+            for (var i = 0; i < imageList.Images.Count; i++)
             {
-                var initial = 0;
-                _paths = dialog.FileNames;
-                _fileNames = dialog.SafeFileNames;
-                for (var i = 0; i < _paths.Length; i++)
-                    imageList.Images.Add(_fileNames[i], Image.FromFile(_paths[i]));
-                imageList.ImageSize = new Size(60, 60);
-                ViewArt.LargeImageList = imageList;
-
-                for (var i = 0; i < imageList.Images.Count; i++)
-                {
-                    var item = new ListViewItem {ImageIndex = i};
-                    ViewArt.Items.Add(item);
-                }
-
-                if (comboBox1.SelectedItem.Equals("Add new categories"))
-                    ArtStudioTxtBox.Visible = true;
-                SubmitButtonCheck();
+                var item = new ListViewItem(_fileNames[i],i);
+                ViewArt.Items.Add(item);
             }
+
+            if (comboBox1.SelectedItem.Equals("Add new categories"))
+                ArtStudioTxtBox.Visible = true;
+            SubmitButtonCheck();
         }
 
         private void comboBox1_SelectionChangeCommitted(object sender, EventArgs e)
@@ -85,10 +85,10 @@ namespace FulgurantArtAnn
             }
             else
             {
-                directory += comboBox1.SelectedText;
+                directory += comboBox1.SelectedItem;
             }
             Directory.CreateDirectory(directory);
-            for (int i = 0; i < _paths.Length; i++)
+            for (int i = 0; i < _paths.Count; i++)
             {
                 try
                 {
@@ -100,7 +100,7 @@ namespace FulgurantArtAnn
                 }
                 
             }
-            _engine.Reload();
+            _engine.TrainClasificationNetwork();
         }
     }
 }

@@ -117,6 +117,7 @@
             // 
             // ViewArt
             // 
+            this.ViewArt.LargeImageList = this.imageList;
             this.ViewArt.Location = new System.Drawing.Point(12, 37);
             this.ViewArt.Name = "ViewArt";
             this.ViewArt.Size = new System.Drawing.Size(308, 149);
@@ -126,7 +127,7 @@
             // imageList
             // 
             this.imageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
-            this.imageList.ImageSize = new System.Drawing.Size(16, 16);
+            this.imageList.ImageSize = new System.Drawing.Size(60, 60);
             this.imageList.TransparentColor = System.Drawing.Color.Transparent;
             // 
             // dialog
