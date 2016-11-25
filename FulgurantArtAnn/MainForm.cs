@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.IO.Directory;
 
 namespace FulgurantArtAnn
 {
@@ -41,12 +42,24 @@ namespace FulgurantArtAnn
 
         private void linkExit_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-           Close();
+            Close();
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-           Application.Exit();
+            Application.Exit();
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                GetDirectories("pictures");
+            }
+            catch (Exception)
+            {
+                CreateDirectory("pictures");
+            }
         }
     }
 }

@@ -12,23 +12,23 @@ using AForge.Neuro.Learning;
 
 namespace FulgurantArtAnn
 {
-    class NeuralEngine 
+    class NeuralEngine
     {
         private static NeuralEngine _instance;
-        private readonly DistanceNetwork _recognizerNetwork;
-        private readonly ActivationNetwork _similarityNetwork;
+        private readonly DistanceNetwork _clusteringNetwork;
+        private readonly ActivationNetwork _classificationNetwork;
 
         private NeuralEngine()
         {
             try
             {
-                _similarityNetwork = Network.Load("BPNNBrain.net") as ActivationNetwork;
-                _recognizerNetwork = Network.Load("SOMBrain.net") as DistanceNetwork;
+                _classificationNetwork = Network.Load("BPNNBrain.net") as ActivationNetwork;
+                _clusteringNetwork = Network.Load("SOMBrain.net") as DistanceNetwork;
             }
             catch (Exception)
             {
-                _similarityNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 100, 1);
-                _recognizerNetwork = new DistanceNetwork(100, 100);
+                _classificationNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 100, 1);
+                _clusteringNetwork = new DistanceNetwork(100, 100);
             }
         }
 
@@ -39,7 +39,6 @@ namespace FulgurantArtAnn
             var imageToArrayConverter = new ImageToArray(min: -1, max: +1);
             var grayscale = new Grayscale(0, 0, 0);
             var threshold = new Threshold();
-            var reduceNoise = new AdditiveNoise();
             var scaling = new ResizeBicubic(10, 10);
             var result = new double[files.Length][];
             var i = 0;
@@ -48,7 +47,6 @@ namespace FulgurantArtAnn
                 var image = Image.FromFile(file) as Bitmap;
                 image = grayscale.Apply(image);
                 image = threshold.Apply(image);
-                image = reduceNoise.Apply(image);
                 image = scaling.Apply(image);
                 imageToArrayConverter.Convert(image, out result[i]);
                 i++;
@@ -58,7 +56,7 @@ namespace FulgurantArtAnn
 
         public double TrainSimilarityNetwork(double[][] input, double[][] output, int epoch = 10000)
         {
-            var bpTrainer = new BackPropagationLearning(_similarityNetwork);
+            var bpTrainer = new BackPropagationLearning(_classificationNetwork);
             var error = 0d;
             for (var i = 0; i < epoch; i++)
                 error = bpTrainer.RunEpoch(input, output);
@@ -67,12 +65,11 @@ namespace FulgurantArtAnn
 
         public double TrainRecognizerNetwork(double[][] input, int epoch = 10000)
         {
-            var somTrainer = new SOMLearning(_recognizerNetwork);
+            var somTrainer = new SOMLearning(_clusteringNetwork);
             var error = 0d;
             for (var i = 0; i < epoch; i++)
                 error = somTrainer.RunEpoch(input);
             return error;
         }
-
     }
 }

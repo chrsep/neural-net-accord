@@ -34,9 +34,12 @@
             this.SubmitArtBtn = new System.Windows.Forms.Button();
             this.BackLblLink = new System.Windows.Forms.LinkLabel();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.bindingSource1 = new System.Windows.Forms.BindingSource(this.components);
             this.ArtStudioTxtBox = new System.Windows.Forms.TextBox();
             this.ViewArt = new System.Windows.Forms.ListView();
             this.imageList = new System.Windows.Forms.ImageList(this.components);
+            this.dialog = new System.Windows.Forms.OpenFileDialog();
+            ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
@@ -73,6 +76,8 @@
             this.SubmitArtBtn.TabIndex = 2;
             this.SubmitArtBtn.Text = "Submit Art";
             this.SubmitArtBtn.UseVisualStyleBackColor = false;
+            this.SubmitArtBtn.Visible = false;
+            this.SubmitArtBtn.Click += new System.EventHandler(this.SubmitArtBtn_Click);
             // 
             // BackLblLink
             // 
@@ -89,13 +94,14 @@
             // comboBox1
             // 
             this.comboBox1.BackColor = System.Drawing.Color.PaleTurquoise;
+            this.comboBox1.DataSource = this.bindingSource1;
             this.comboBox1.ForeColor = System.Drawing.Color.DarkOrange;
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Location = new System.Drawing.Point(144, 194);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(176, 21);
             this.comboBox1.TabIndex = 4;
-            this.comboBox1.Text = "Add New Category";
+            this.comboBox1.SelectionChangeCommitted += new System.EventHandler(this.comboBox1_SelectionChangeCommitted);
             // 
             // ArtStudioTxtBox
             // 
@@ -106,6 +112,8 @@
             this.ArtStudioTxtBox.TabIndex = 5;
             this.ArtStudioTxtBox.Text = "Art Studio";
             this.ArtStudioTxtBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.ArtStudioTxtBox.Visible = false;
+            this.ArtStudioTxtBox.TextChanged += new System.EventHandler(this.SubmitButtonCheck);
             // 
             // ViewArt
             // 
@@ -114,14 +122,17 @@
             this.ViewArt.Size = new System.Drawing.Size(308, 149);
             this.ViewArt.TabIndex = 6;
             this.ViewArt.UseCompatibleStateImageBehavior = false;
-            this.ViewArt.View = System.Windows.Forms.View.SmallIcon;
-            this.ViewArt.SelectedIndexChanged += new System.EventHandler(this.ViewArt_SelectedIndexChanged);
             // 
             // imageList
             // 
             this.imageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
             this.imageList.ImageSize = new System.Drawing.Size(16, 16);
             this.imageList.TransparentColor = System.Drawing.Color.Transparent;
+            // 
+            // dialog
+            // 
+            this.dialog.Filter = "Image Files (*.jpg,*.jpeg,*.png) | *.jpg; *.jpeg; *.png";
+            this.dialog.Multiselect = true;
             // 
             // AddArtForm
             // 
@@ -140,7 +151,7 @@
             this.HelpButton = true;
             this.Name = "AddArtForm";
             this.Text = "AddArtForm";
-            this.Load += new System.EventHandler(this.AddArtForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -156,5 +167,7 @@
         private System.Windows.Forms.TextBox ArtStudioTxtBox;
         private System.Windows.Forms.ListView ViewArt;
         private System.Windows.Forms.ImageList imageList;
+        private System.Windows.Forms.OpenFileDialog dialog;
+        private System.Windows.Forms.BindingSource bindingSource1;
     }
 }
