@@ -100,6 +100,7 @@ namespace FulgurantArtAnn
                 }
                 
             }
+            _engine.Reload();
         }
     }
 }

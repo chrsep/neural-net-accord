@@ -17,6 +17,7 @@ namespace FulgurantArtAnn
         private static NeuralEngine _instance;
         private readonly DistanceNetwork _clusteringNetwork;
         private readonly ActivationNetwork _classificationNetwork;
+        private Dictionary<String, double[][]> _allData;
 
         private NeuralEngine()
         {
@@ -30,6 +31,7 @@ namespace FulgurantArtAnn
                 _classificationNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 100, 1);
                 _clusteringNetwork = new DistanceNetwork(100, 100);
             }
+            Reload();
         }
 
         public static NeuralEngine Instance => _instance ?? (_instance = new NeuralEngine());
@@ -70,6 +72,18 @@ namespace FulgurantArtAnn
             for (var i = 0; i < epoch; i++)
                 error = somTrainer.RunEpoch(input);
             return error;
+        }
+
+        public void Reload()
+        {
+            _allData = new Dictionary<string, double[][]>();
+            var categories = Directory.GetDirectories("pictures");
+            foreach (var category in categories)
+            {
+                var imagePaths = Directory.GetFiles(category);
+                var images = PreprocessImageFromFiles(imagePaths);
+                _allData.Add(new DirectoryInfo(category).Name, images);
+            }
         }
     }
 }
