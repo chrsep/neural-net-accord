@@ -29,37 +29,45 @@ namespace FulgurantArtAnn
                 _classificationNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 100, 1);
                 _clusteringNetwork = new DistanceNetwork(100, 100);
             }
+            Reload();
         }
 
         public static NeuralEngine Instance => _instance ?? (_instance = new NeuralEngine());
 
         public double[][] PreprocessImageFromFiles(string[] files)
         {
-            var imageToArrayConverter = new ImageToArray(-1, +1);
-            var grayscale = new Grayscale(0, 0, 0);
-            var threshold = new Threshold();
-            var scaling = new ResizeBicubic(10, 10);
+            var imageToArrayConverter = new ImageToArray(min:0, max:1);
             var result = new double[files.Length][];
             var i = 0;
             foreach (var file in files)
             {
                 var image = Image.FromFile(file) as Bitmap;
-                image = grayscale.Apply(image);
-                image = threshold.Apply(image);
-                image = scaling.Apply(image);
-                imageToArrayConverter.Convert(image, out result[i]);
+                imageToArrayConverter.Convert(PreprocessImage(image), out result[i]);
                 i++;
             }
             return result;
         }
 
-        public double TrainClasificationNetwork(int epoch = 10000)
+        public Bitmap PreprocessImage(Bitmap image)
+        {
+            var grayscale = new Grayscale(0, 0, 0);
+            var threshold = new Threshold();
+            var scaling = new ResizeBicubic(10, 10);
+
+            image = grayscale.Apply(image);
+            image = threshold.Apply(image);
+            image = scaling.Apply(image);
+              
+            return image;
+        }
+
+        public double TrainClasificationNetwork(int epoch = 100000)
         {
             Reload();
             var dataArray = _allData.Values.ToArray();
             var input = new List<double[]>();
             var output = new List<double[]>();
-            for (int i = 0; i < dataArray.Length; i++)
+            for (var i = 0; i < dataArray.Length; i++)
             {
                 input.AddRange(dataArray[i]);
                 foreach (var data in dataArray[i])
@@ -69,12 +77,30 @@ namespace FulgurantArtAnn
                     output.Add(temp);
                 }
             }
-
+            output = normalizeOutput(output);
             var bpTrainer = new BackPropagationLearning(_classificationNetwork);
             var error = 0d;
             for (var i = 0; i < epoch; i++)
                 error = bpTrainer.RunEpoch(input.ToArray(), output.ToArray());
             return error;
+        }
+
+        private List<double[]> normalizeOutput(List<double[]> output)
+        {
+            double maxOutput = _allData.Count, minOutput = 0;
+            return output.Select(item =>
+            {
+                double result = (item[0] - minOutput)/(maxOutput - minOutput)*1;
+                double[] resultArray = new double[1];
+                resultArray[0] = result;
+                return resultArray;
+            }).ToList();
+        }
+
+        private double DenormalizeOutput(double[] output)
+        {
+            double maxOutput = _allData.Count, minOutput = 0;
+            return minOutput + (output[0]) / (maxOutput - minOutput);
         }
 
         public double TrainClusteringNetwork(int epoch = 10000)
@@ -106,6 +132,23 @@ namespace FulgurantArtAnn
                 var images = PreprocessImageFromFiles(imagePaths);
                 _allData.Add(new DirectoryInfo(path).Name, images);
             }
+        }
+
+        public string Classify(Bitmap processedImage)
+        {
+            var imageToArrayConverter = new ImageToArray(min: 0, max: 1);
+            double[] array;
+            imageToArrayConverter.Convert(processedImage, out array);
+            var computedValue = _classificationNetwork.Compute(array);
+            var result = DenormalizeOutput(computedValue);
+            var categories = _allData.Keys.ToArray();
+            return categories[(int) result];
+        }
+
+        public void Save()
+        {
+            _clusteringNetwork.Save("SOMBrain.net");
+            _classificationNetwork.Save("BPNNBrain.net");
         }
     }
 }
