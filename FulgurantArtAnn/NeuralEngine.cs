@@ -26,7 +26,7 @@ namespace FulgurantArtAnn
             }
             catch (Exception)
             {
-                _classificationNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 100, 1);
+                _classificationNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 10, 1);
                 _clusteringNetwork = new DistanceNetwork(100, 100);
             }
             Reload();
@@ -97,12 +97,6 @@ namespace FulgurantArtAnn
             }).ToList();
         }
 
-        private double DenormalizeOutput(double[] output)
-        {
-            double maxOutput = _allData.Count, minOutput = 0;
-            return minOutput + (output[0]) / (maxOutput - minOutput);
-        }
-
         public double TrainClusteringNetwork(int epoch = 10000)
         {
             Reload();
@@ -140,7 +134,7 @@ namespace FulgurantArtAnn
             double[] array;
             imageToArrayConverter.Convert(processedImage, out array);
             var computedValue = _classificationNetwork.Compute(array);
-            var result = DenormalizeOutput(computedValue);
+            var result = computedValue[0] * _allData.Count;
             var categories = _allData.Keys.ToArray();
             return categories[(int) result];
         }
