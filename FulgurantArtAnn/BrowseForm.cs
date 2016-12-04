@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace FulgurantArtAnn
@@ -45,7 +39,7 @@ namespace FulgurantArtAnn
             else
             {
                 var imageIndex = 0;
-                for (int i = 0; i < data.Count(); i++)
+                for (var i = 0; i < data.Count(); i++)
                 {
                     ListViewGroup viewGroup;
                     var category = data.Keys.ElementAt(i);
@@ -59,11 +53,11 @@ namespace FulgurantArtAnn
 
                     var images = data.Values.ElementAt(i);
                     var filenames = Directory.GetFiles("pictures/" + category);
-                    for (int j = 0; j < images.Count; j++)
+                    for (var j = 0; j < images.Count; j++)
                     {
                         var image = images[j];
                         imageList1.Images.Add(image);
-                        ListViewItem item = new ListViewItem(new DirectoryInfo(filenames[j]).Name, imageIndex, viewGroup);
+                        var item = new ListViewItem(new DirectoryInfo(filenames[j]).Name, imageIndex, viewGroup);
                         listView1.Items.Add(item);
                         imageIndex++;
                     }
