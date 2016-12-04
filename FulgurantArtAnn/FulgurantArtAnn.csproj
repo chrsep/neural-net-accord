@@ -75,6 +75,12 @@
     <Compile Include="CheckCategoryForm.Designer.cs">
       <DependentUpon>CheckCategoryForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ArtDetail.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ArtDetail.Designer.cs">
+      <DependentUpon>ArtDetail.cs</DependentUpon>
+    </Compile>
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -92,6 +98,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="CheckCategoryForm.resx">
       <DependentUpon>CheckCategoryForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ArtDetail.resx">
+      <DependentUpon>ArtDetail.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
