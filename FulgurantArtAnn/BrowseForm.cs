@@ -32,48 +32,5 @@ namespace FulgurantArtAnn
         {
             Close();
         }
-
-        private void BrowseForm_Load(object sender, EventArgs e)
-        {
-            if (_engine.getList() == false)
-            {
-                MessageBox.Show("Add some art first!");
-                _parentForm.Show();
-                Close();
-            }
-            else {
-                
-
-                for (int i = 0; i < _engine.getCategory().Count(); i++)
-                {
-                    ListViewGroup viewGroup;
-
-                    var category = _engine.getCategory().Keys.ElementAt(i);
-
-                    if (listView1.Groups[category] == null)
-                    {
-                        viewGroup = new ListViewGroup(category, category);
-
-                        listView1.Groups.Add(viewGroup);
-                    }
-                    else {
-                        viewGroup = listView1.Groups[category];
-                    }
-                    
-
-                    var images = _engine.getImage();
-
-                    MessageBox.Show(images.Count().ToString());
-                    
-                    foreach (var image in images)
-                    {
-                        imageList1.Images.Add(image);
-                    }
-
-                    ListViewItem item = new ListViewItem(category, i, viewGroup);
-                    listView1.Items.Add(item);
-                }
-            }
-        }
     }
 }

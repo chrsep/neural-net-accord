@@ -63,11 +63,9 @@
             // 
             // listView1
             // 
-            this.listView1.LargeImageList = this.imageList1;
             this.listView1.Location = new System.Drawing.Point(12, 25);
             this.listView1.Name = "listView1";
             this.listView1.Size = new System.Drawing.Size(409, 170);
-            this.listView1.SmallImageList = this.imageList1;
             this.listView1.TabIndex = 2;
             this.listView1.UseCompatibleStateImageBehavior = false;
             // 
@@ -82,7 +80,6 @@
             this.Name = "BrowseForm";
             this.Text = "BrowseForm";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.BrowseForm_FormClosed);
-            this.Load += new System.EventHandler(this.BrowseForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

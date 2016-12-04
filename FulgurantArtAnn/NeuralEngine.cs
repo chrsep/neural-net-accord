@@ -85,40 +85,5 @@ namespace FulgurantArtAnn
                 _allData.Add(new DirectoryInfo(category).Name, images);
             }
         }
-
-        public bool getList() {
-
-            if (_allData.Count() != 0)
-            {
-                return true;
-            }
-            else {
-                return false;
-            }
-        
-        }
-
-        public Dictionary<string, double[][]> getCategory() {
-            return _allData;
-        }
-
-        public List<Bitmap> getImage() {
-
-            var image = new List<Bitmap>();
-
-            var paths = Directory.GetDirectories("pictures");
-
-            var ct = paths.Count();
-            
-            foreach (var path in paths)
-            {
-                var imagePaths = Directory.GetFiles(path);
-                var images = imagePaths.Select(imagePath => new Bitmap(imagePath));
-                image.AddRange(images);
-            }
-
-            return image;
-        }
-        
     }
 }
