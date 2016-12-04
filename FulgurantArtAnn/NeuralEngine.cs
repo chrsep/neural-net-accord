@@ -190,5 +190,22 @@ namespace FulgurantArtAnn
             Directory.GetDirectories("pictures").ToDictionary(
                 path => new DirectoryInfo(path).Name,
                 path => PreprocessImageFromFiles(Directory.GetFiles(path)));
+
+        public bool GetList() => _allData.Count() != 0;
+
+        public Dictionary<string, double[][]> GetCategory() => _allData;
+
+        public List<Bitmap> GetImage()
+        {
+            var image = new List<Bitmap>();
+            var paths = Directory.GetDirectories("pictures");
+            foreach (var path in paths)
+            {
+                var imagePaths = Directory.GetFiles(path);
+                var images = imagePaths.Select(imagePath => new Bitmap(imagePath));
+                image.AddRange(images);
+            }
+            return image;
+        }
     }
 }

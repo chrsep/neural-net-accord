@@ -35,20 +35,19 @@ namespace FulgurantArtAnn
 
         private void BrowseForm_Load(object sender, EventArgs e)
         {
-            if (_engine.getList() == false)
+            if (_engine.GetList() == false)
             {
                 MessageBox.Show("Add some art first!");
                 _parentForm.Show();
                 Close();
             }
-            else {
-                
-
-                for (int i = 0; i < _engine.getCategory().Count(); i++)
+            else
+            {
+                for (int i = 0; i < _engine.GetCategory().Count(); i++)
                 {
                     ListViewGroup viewGroup;
 
-                    var category = _engine.getCategory().Keys.ElementAt(i);
+                    var category = _engine.GetCategory().Keys.ElementAt(i);
 
                     if (listView1.Groups[category] == null)
                     {
@@ -56,15 +55,16 @@ namespace FulgurantArtAnn
 
                         listView1.Groups.Add(viewGroup);
                     }
-                    else {
+                    else
+                    {
                         viewGroup = listView1.Groups[category];
                     }
-                    
 
-                    var images = _engine.getImage();
+
+                    var images = _engine.GetImage();
 
                     MessageBox.Show(images.Count().ToString());
-                    
+
                     foreach (var image in images)
                     {
                         imageList1.Images.Add(image);
