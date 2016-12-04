@@ -10,8 +10,8 @@ using AForge.Neuro.Learning;
 namespace FulgurantArtAnn
 {
     /// <summary>
-    ///     Neural Network Singletion, Handles or neural network and data related task
-    ///     Example. Training, save data, recognize image, etc
+    ///     Neural Network Singletion, Handles all neural network and data related task
+    ///     Example: Training, save data, recognize image, etc
     /// </summary>
     internal class NeuralEngine
     {
@@ -43,9 +43,8 @@ namespace FulgurantArtAnn
         /// </summary>
         /// <param name="epoch">Number of epoch</param>
         /// <returns>Neural network Error</returns>
-        public double TrainClasificationNetwork(int epoch = 100000)
+        public double TrainClasificationNetwork(int epoch = 10000)
         {
-            _allData = GetTrainingData();
             var dataArray = _allData.Values.ToArray();
             var input = new List<double[]>();
             var output = new List<double[]>();
@@ -59,6 +58,8 @@ namespace FulgurantArtAnn
             var error = 0d;
             for (var i = 0; i < epoch; i++)
                 error = trainer.RunEpoch(input.ToArray(), output.ToArray());
+
+            // BUG: Error hovers around 0.4, cant go lower
             return error;
         }
 
@@ -67,19 +68,10 @@ namespace FulgurantArtAnn
         /// </summary>
         /// <param name="epoch">Number of epoch</param>
         /// <returns>Neural network Error</returns>
-        public double TrainClusteringNetwork(int epoch = 10000)
+        // TODO: Build the correct clustering network
+        public void ClusterData(Bitmap bitmap, int epoch = 10000)
         {
-            _allData = GetTrainingData();
-            var dataArray = _allData.Values.ToArray();
-            var input = new List<double[]>();
-            foreach (var data in dataArray)
-                input.AddRange(data);
-
-            var somTrainer = new SOMLearning(_clusteringNetwork);
-            var error = 0d;
-            for (var i = 0; i < epoch; i++)
-                error = somTrainer.RunEpoch(input.ToArray());
-            return error;
+           
         }
 
         /// <summary>
@@ -96,7 +88,7 @@ namespace FulgurantArtAnn
         }
 
         /// <summary>
-        ///     Saved network to files
+        ///     Save network to files
         /// </summary>
         public void Save()
         {
@@ -105,7 +97,7 @@ namespace FulgurantArtAnn
         }
 
         /// <summary>
-        ///     Preprocessed image according to the specification
+        ///     Preprocessed image (Grayscale, Threshold, Reduce Noice / Crop,Resize)
         /// </summary>
         /// <param name="image">Image to be processed</param>
         /// <returns>Processed image (10x10, black and white image)</returns>
@@ -117,6 +109,10 @@ namespace FulgurantArtAnn
             return new ResizeBilinear(10, 10).Apply(image);
         }
 
+        /// <summary>
+        /// Check whether neural engine singleton instance already exists
+        /// </summary>
+        /// <returns>True if Neural Engine singleton alreade exists, false otherwise</returns>
         public static bool IsExist() => _instance != null;
 
         /// <summary>
@@ -129,7 +125,8 @@ namespace FulgurantArtAnn
         {
             var result = new double[filePaths.Length][];
             for (var i = 0; i < filePaths.Length; i++)
-                _imageToArray.Convert(PreprocessImage(new Bitmap(filePaths[i])), out result[i]);
+                // TODO: Find out wether to use imagetoarray or to use denormalization method
+                result[i] = NormalizeInput(PreprocessImage(new Bitmap(filePaths[i])));
             return result;
         }
 
@@ -141,6 +138,12 @@ namespace FulgurantArtAnn
             Directory.GetDirectories("pictures").ToDictionary(
                 path => new DirectoryInfo(path).Name,
                 path => Directory.GetFiles(path).Select(file => new Bitmap(file)).ToList());
+
+        public void ReloadData()
+        {
+            _allData = GetTrainingData();
+        }
+
 
         // PRIVATE FUNCTIONS===================================================================================================
 
@@ -192,5 +195,20 @@ namespace FulgurantArtAnn
             Directory.GetDirectories("pictures").ToDictionary(
                 path => new DirectoryInfo(path).Name,
                 path => PreprocessImageFromFiles(Directory.GetFiles(path)));
+
+        private double[] NormalizeInput(Bitmap image)
+        {
+            var inputNormal = new double[100];
+            for (var i = 0; i < image.Width; i++)
+            {
+                for (var j = 0; j < image.Height; j++)
+                {
+                    int input = image.GetPixel(i, j).B / 255;
+                    inputNormal[i + j] = input;
+                }
+            }
+
+            return inputNormal;
+        }
     }
 }

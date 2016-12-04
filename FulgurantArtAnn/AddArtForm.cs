@@ -97,7 +97,7 @@ namespace FulgurantArtAnn
                 }
                 
             }
-            NeuralEngine.Instance.TrainClasificationNetwork();
+            NeuralEngine.Instance.ReloadData();
         }
     }
 }
