@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -10,103 +9,71 @@ using AForge.Neuro.Learning;
 
 namespace FulgurantArtAnn
 {
+    /// <summary>
+    ///     Neural Network Singletion, Handles or neural network related task
+    ///     Example. Training, save data, recognize image, etc
+    /// </summary>
     internal class NeuralEngine
     {
         private static NeuralEngine _instance;
+        private readonly ImageToArray _imageToArray;
         private Dictionary<string, double[][]> _allData;
-        private ActivationNetwork _classificationNetwork;
-        private DistanceNetwork _clusteringNetwork;
+        private readonly ActivationNetwork _classificationNetwork;
+        private readonly DistanceNetwork _clusteringNetwork;
 
         private NeuralEngine()
         {
-            try
-            {
-                _classificationNetwork = Network.Load("BPNNBrain.net") as ActivationNetwork;
-                _clusteringNetwork = Network.Load("SOMBrain.net") as DistanceNetwork;
-            }
-            catch (Exception)
-            {
-                _classificationNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 10, 1);
-                _clusteringNetwork = new DistanceNetwork(100, 100);
-            }
-            Reload();
+            _classificationNetwork = File.Exists("BPNNBrain.net")
+                ? Network.Load("BPNNBrain.net") as ActivationNetwork
+                : new ActivationNetwork(new SigmoidFunction(), 100, 10, 1);
+
+            _clusteringNetwork = File.Exists("SOMBrain.net")
+                ? Network.Load("SOMBrain.net") as DistanceNetwork
+                : new DistanceNetwork(100, 100);
+
+            _imageToArray = new ImageToArray(0, 1);
+            _allData = GetTrainingData();
         }
 
+        //PUBLIC FUNCTIONS==================================================================
         public static NeuralEngine Instance => _instance ?? (_instance = new NeuralEngine());
 
-        public double[][] PreprocessImageFromFiles(string[] files)
-        {
-            var imageToArrayConverter = new ImageToArray(min:0, max:1);
-            var result = new double[files.Length][];
-            var i = 0;
-            foreach (var file in files)
-            {
-                var image = Image.FromFile(file) as Bitmap;
-                imageToArrayConverter.Convert(PreprocessImage(image), out result[i]);
-                i++;
-            }
-            return result;
-        }
-
-        public Bitmap PreprocessImage(Bitmap image)
-        {
-            var grayscale = new Grayscale(0, 0, 0);
-            var threshold = new Threshold();
-            var scaling = new ResizeBicubic(10, 10);
-
-            image = grayscale.Apply(image);
-            image = threshold.Apply(image);
-            image = scaling.Apply(image);
-              
-            return image;
-        }
-
+        /// <summary>
+        ///     Trains Network for classification (Activation Network, Backpropagation)
+        /// </summary>
+        /// <param name="epoch">Number of epoch</param>
+        /// <returns>Neural network Error</returns>
         public double TrainClasificationNetwork(int epoch = 100000)
         {
-            Reload();
+            _allData = GetTrainingData();
             var dataArray = _allData.Values.ToArray();
             var input = new List<double[]>();
             var output = new List<double[]>();
             for (var i = 0; i < dataArray.Length; i++)
             {
                 input.AddRange(dataArray[i]);
-                foreach (var data in dataArray[i])
-                {
-                    var temp = new double[1];
-                    temp[0] = i;
-                    output.Add(temp);
-                }
+                output.AddRange(dataArray[i].Select(data => new double[] {i}));
             }
-            output = normalizeOutput(output);
-            var bpTrainer = new BackPropagationLearning(_classificationNetwork);
+            output = NormalizeOutput(output);
+            var trainer = new BackPropagationLearning(_classificationNetwork);
             var error = 0d;
             for (var i = 0; i < epoch; i++)
-                error = bpTrainer.RunEpoch(input.ToArray(), output.ToArray());
+                error = trainer.RunEpoch(input.ToArray(), output.ToArray());
             return error;
         }
 
-        private List<double[]> normalizeOutput(List<double[]> output)
-        {
-            double maxOutput = _allData.Count, minOutput = 0;
-            return output.Select(item =>
-            {
-                double result = (item[0] - minOutput)/(maxOutput - minOutput)*1;
-                double[] resultArray = new double[1];
-                resultArray[0] = result;
-                return resultArray;
-            }).ToList();
-        }
-
+        /// <summary>
+        ///     Trains Network for Clustering (Distance Network, Self Organizing Map)
+        /// </summary>
+        /// <param name="epoch">Number of epoch</param>
+        /// <returns>Neural network Error</returns>
         public double TrainClusteringNetwork(int epoch = 10000)
         {
-            Reload();
+            _allData = GetTrainingData();
             var dataArray = _allData.Values.ToArray();
             var input = new List<double[]>();
             foreach (var data in dataArray)
-            {
                 input.AddRange(data);
-
-            }
 
             var somTrainer = new SOMLearning(_clusteringNetwork);
             var error = 0d;
@@ -115,34 +82,113 @@ namespace FulgurantArtAnn
             return error;
         }
 
-        public void Reload()
-        {
-            _allData = new Dictionary<string, double[][]>();
-
-            var paths = Directory.GetDirectories("pictures");
-            foreach (var path in paths)
-            {
-                var imagePaths = Directory.GetFiles(path);
-                var images = PreprocessImageFromFiles(imagePaths);
-                _allData.Add(new DirectoryInfo(path).Name, images);
-            }
-        }
-
+        /// <summary>
+        ///     Used to classify image into a category
+        /// </summary>
+        /// <param name="processedImage">Image that has been preprocessed</param>
+        /// <returns>Category that the image belongs to (according to the network)</returns>
         public string Classify(Bitmap processedImage)
         {
-            var imageToArrayConverter = new ImageToArray(min: 0, max: 1);
             double[] array;
-            imageToArrayConverter.Convert(processedImage, out array);
-            var computedValue = _classificationNetwork.Compute(array);
-            var result = computedValue[0] * _allData.Count;
-            var categories = _allData.Keys.ToArray();
-            return categories[(int) result];
+            _imageToArray.Convert(processedImage, out array);
+            var result = (int)_classificationNetwork.Compute(array)[0]*_allData.Count;
+            return _allData.Keys.ToArray()[result];
         }
 
+        /// <summary>
+        ///     Saved network to files
+        /// </summary>
         public void Save()
         {
             _clusteringNetwork.Save("SOMBrain.net");
             _classificationNetwork.Save("BPNNBrain.net");
         }
+
+        /// <summary>
+        ///     Preprocessed image according to the specification
+        /// </summary>
+        /// <param name="image">Image to be processed</param>
+        /// <returns>Processed image (10x10, black and white image)</returns>
+        public Bitmap PreprocessImage(Bitmap image)
+        {
+            image = Grayscale.CommonAlgorithms.RMY.Apply(image);
+            image = new Threshold(127).Apply(image);
+            image = Crop(image);
+            return new ResizeBilinear(10, 10).Apply(image);
+        }
+
+        /// <summary>
+        ///     Gets all of images from picture folder
+        /// </summary>
+        /// <returns>Dictionary of category name and image array</returns>
+        private Dictionary<string, List<Bitmap>> GetImages() =>
+            Directory.GetDirectories("pictures").ToDictionary(
+                path => new DirectoryInfo(path).Name,
+                path => Directory.GetFiles(path).Select(file => new Bitmap(file)).ToList());
+
+        // PRIVATE FUNCTIONS===================================================================================================
+
+        /// <summary>
+        ///     Normalized Output for training, Formula: output/total number of category
+        /// </summary>
+        /// <param name="outputs">Array of output to be normalized</param>
+        /// <returns>Normalized Output</returns>
+        private List<double[]> NormalizeOutput(List<double[]> outputs) =>
+            outputs.Select(output => new[] {output[0]/_allData.Count}).ToList();
+
+        /// <summary>
+        ///     Reduce image size to only contain the important information (Part of image that has content above threshold)
+        /// </summary>
+        /// <param name="image">Image to Crop</param>
+        /// <returns>Cropped image</returns>
+        private Bitmap Crop(Bitmap image)
+        {
+            int xMin = image.Width,
+                yMin = image.Height,
+                xMax = 0,
+                yMax = 0;
+
+            for (var i = 0; i < image.Width; i++)
+                for (var j = 0; j < image.Height; j++)
+                {
+                    if (image.GetPixel(i, j).R <= 127) continue;
+                    xMin = i < xMin ? i : xMin;
+                    yMin = j < yMin ? j : yMin;
+                    xMax = i > xMax ? i : xMax;
+                    yMax = j > yMax ? j : yMax;
+                }
+
+            if (xMin == image.Width) xMin = 0;
+            if (yMin == image.Height) yMin = 0;
+            if (xMax == 0) xMax = image.Width;
+            if (yMax == 0) yMax = image.Height;
+
+            var cropped = new Bitmap(xMax, yMax);
+            Graphics.FromImage(cropped).DrawImage(image, xMin, yMin, xMax, yMax);
+            return cropped;
+        }
+
+        /// <summary>
+        ///     Quick function to turn list of image paths into
+        ///     preprocessed image that has been converted into array, ready for training
+        /// </summary>
+        /// <param name="filePaths">Array of file paths</param>
+        /// <returns>Array of images in the form of array</returns>
+        private double[][] PreprocessImageFromFiles(string[] filePaths)
+        {
+            var result = new double[filePaths.Length][];
+            for (var i = 0; i < filePaths.Length; i++)
+                _imageToArray.Convert(PreprocessImage(new Bitmap(filePaths[i])), out result[i]);
+            return result;
+        }
+
+        /// <summary>
+        ///     Gets all of images from picture folder
+        /// </summary>
+        /// <returns>Dictionary of category name and image array</returns>
+        private Dictionary<string, double[][]> GetTrainingData() =>
+            Directory.GetDirectories("pictures").ToDictionary(
+                path => new DirectoryInfo(path).Name,
+                path => PreprocessImageFromFiles(Directory.GetFiles(path)));
     }
 }
