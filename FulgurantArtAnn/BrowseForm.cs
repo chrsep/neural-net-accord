@@ -43,49 +43,29 @@ namespace FulgurantArtAnn
             }
             else
             {
+                var imageIndex = 0;
                 for (int i = 0; i < data.Count(); i++)
                 {
                     ListViewGroup viewGroup;
-
                     var category = data.Keys.ElementAt(i);
-
                     if (listView1.Groups[category] == null)
                     {
                         viewGroup = new ListViewGroup(category, category);
-
                         listView1.Groups.Add(viewGroup);
                     }
-                    else
-                    {
-                        viewGroup = listView1.Groups[category];
-                    }
+                    else viewGroup = listView1.Groups[category];
 
-                    var images = GetImage();
 
-                    MessageBox.Show(images.Count().ToString());
-
+                    var images = data.Values.ElementAt(i);
                     foreach (var image in images)
                     {
                         imageList1.Images.Add(image);
-                    }
-
-                    ListViewItem item = new ListViewItem(category, i, viewGroup);
-                    listView1.Items.Add(item);
+                        ListViewItem item = new ListViewItem(category, imageIndex, viewGroup);
+                        listView1.Items.Add(item);
+                        imageIndex++;
+                    }                    
                 }
             }
-        }
-
-        public List<Bitmap> GetImage()
-        {
-            var image = new List<Bitmap>();
-            var paths = Directory.GetDirectories("pictures");
-            foreach (var path in paths)
-            {
-                var imagePaths = Directory.GetFiles(path);
-                var images = imagePaths.Select(imagePath => new Bitmap(imagePath));
-                image.AddRange(images);
-            }
-            return image;
         }
     }
 }

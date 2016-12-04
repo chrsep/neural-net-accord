@@ -10,7 +10,7 @@ using AForge.Neuro.Learning;
 namespace FulgurantArtAnn
 {
     /// <summary>
-    ///     Neural Network Singletion, Handles or neural network related task
+    ///     Neural Network Singletion, Handles or neural network and data related task
     ///     Example. Training, save data, recognize image, etc
     /// </summary>
     internal class NeuralEngine
