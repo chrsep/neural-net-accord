@@ -57,13 +57,15 @@ namespace FulgurantArtAnn
 
 
                     var images = data.Values.ElementAt(i);
-                    foreach (var image in images)
+                    var filenames = Directory.GetFiles("pictures/" + category);
+                    for (int j = 0; j < images.Count; j++)
                     {
+                        var image = images[j];
                         imageList1.Images.Add(image);
-                        ListViewItem item = new ListViewItem(category, imageIndex, viewGroup);
+                        ListViewItem item = new ListViewItem(new DirectoryInfo(filenames[j]).Name, imageIndex, viewGroup);
                         listView1.Items.Add(item);
                         imageIndex++;
-                    }                    
+                    }
                 }
             }
         }
