@@ -44,6 +44,9 @@
     <Reference Include="Accord.Neuro">
       <HintPath>..\lib\net45\Accord.Neuro.dll</HintPath>
     </Reference>
+    <Reference Include="Accord.Statistics, Version=3.0.2.0, Culture=neutral, PublicKeyToken=fa1a88e29555ccf7">
+      <HintPath>..\lib\net45\Accord.Statistics.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -6,6 +7,7 @@ using Accord.Imaging.Converters;
 using AForge.Imaging.Filters;
 using AForge.Neuro;
 using AForge.Neuro.Learning;
+using Accord.Statistics.Analysis;
 
 namespace FulgurantArtAnn
 {
@@ -69,9 +71,32 @@ namespace FulgurantArtAnn
         /// <param name="epoch">Number of epoch</param>
         /// <returns>Neural network Error</returns>
         // TODO: Build the correct clustering network
-        public void ClusterData(Bitmap bitmap, int epoch = 10000)
+        public double TrainClusteringNetwork(int epoch = 10000)
         {
-           
+            var dataArray = _allData.Values.ToList();
+            var input = new List<double[]>();
+            dataArray.ForEach(data => input.AddRange(data));
+            var pca = new PrincipalComponentAnalysis(input.ToArray());
+            pca.Compute();
+            var pcaResult = new double[pca.Result.GetLength(0)][];
+            for (int i = 0; i < pca.Result.GetLength(0); i++)
+            {
+                for (int j = 0; j < pca.Result.GetLength(1); j++)
+                {
+                    pcaResult[i][j] = pca.Result[i, j];
+                }
+            }
+
+            var trainer = new SOMLearning(_clusteringNetwork);
+            var error = 0d;
+            for (int i = 0; i < epoch; i++)
+            {
+                error = trainer.RunEpoch(pcaResult);
+                if (error < 0.0001)
+                    break;
+            }
+
+            return error;
         }
 
         /// <summary>
@@ -83,8 +108,50 @@ namespace FulgurantArtAnn
         {
             double[] array;
             _imageToArray.Convert(processedImage, out array);
-            var result = (int)_classificationNetwork.Compute(array)[0]*_allData.Count;
+            var result = (int) _classificationNetwork.Compute(array)[0] * _allData.Count;
             return _allData.Keys.ToArray()[result];
+        }
+
+        /// <summary>
+        /// Find a similar image of the image inputted into the method
+        /// </summary>
+        /// <param name="inputFilePath">full path to the image file</param>
+        /// <returns>List of bitmap similar to the input, empty bitmap list if no image is similar</returns>
+        public List<Bitmap> FindSimilar(string inputFilePath)
+        {
+            var categories = _allData.Keys.ToArray().ToList();
+            var pathImageDictionary = new Dictionary<string, Bitmap>();
+
+            categories.ForEach(
+                category => Directory.GetFiles("pictures/" + category).ToList().ForEach(
+                    file => pathImageDictionary.Add(file, new Bitmap(file))
+                )
+            );
+
+            pathImageDictionary.Remove(inputFilePath);
+            var clusterImageDictionary = new Dictionary<int, List<Bitmap>>();
+            foreach (var pair in pathImageDictionary)
+            {
+                var imageArray = new double[100];
+                _imageToArray.Convert(PreprocessImage(pair.Value), out imageArray);
+                _clusteringNetwork.Compute(imageArray);
+                int cluster = _clusteringNetwork.GetWinner();
+                if (clusterImageDictionary.ContainsKey(cluster))
+                {
+                    clusterImageDictionary[cluster].Add(pair.Value);
+                }
+                else
+                {
+                    clusterImageDictionary.Add(cluster, new List<Bitmap>());
+                    clusterImageDictionary[cluster].Add(pair.Value);
+                }
+            }
+
+            var inputImageArray = new double[100];
+            _imageToArray.Convert(PreprocessImage(new Bitmap(inputFilePath)), out inputImageArray);
+            _clusteringNetwork.Compute(inputImageArray);
+            int inputCluster = _clusteringNetwork.GetWinner();
+            return clusterImageDictionary.ContainsKey(inputCluster) ? clusterImageDictionary[inputCluster] : new List<Bitmap>();
         }
 
         /// <summary>
@@ -153,7 +220,7 @@ namespace FulgurantArtAnn
         /// <param name="outputs">Array of output to be normalized</param>
         /// <returns>Normalized Output</returns>
         private List<double[]> NormalizeOutput(List<double[]> outputs) =>
-            outputs.Select(output => new[] {output[0]/_allData.Count}).ToList();
+            outputs.Select(output => new[] {output[0] / _allData.Count}).ToList();
 
         /// <summary>
         ///     Reduce image size to only contain the important information (Part of image that has content above threshold)
