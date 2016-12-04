@@ -95,6 +95,8 @@
             // 
             this.comboBox1.BackColor = System.Drawing.Color.PaleTurquoise;
             this.comboBox1.DataSource = this.bindingSource1;
+            this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox1.Enabled = false;
             this.comboBox1.ForeColor = System.Drawing.Color.DarkOrange;
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Location = new System.Drawing.Point(144, 194);

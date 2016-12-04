@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,14 +14,12 @@ namespace FulgurantArtAnn
     public partial class BrowseForm : Form
     {
         private readonly Form _parentForm;
-        private readonly NeuralEngine _engine;
 
         public BrowseForm(Form parent)
         {
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
             _parentForm = parent;
-            _engine = NeuralEngine.Instance;
         }
 
         private void BrowseForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -35,7 +34,8 @@ namespace FulgurantArtAnn
 
         private void BrowseForm_Load(object sender, EventArgs e)
         {
-            if (_engine.GetList() == false)
+            var data = NeuralEngine.GetImages();
+            if (data.Count == 0)
             {
                 MessageBox.Show("Add some art first!");
                 _parentForm.Show();
@@ -43,11 +43,11 @@ namespace FulgurantArtAnn
             }
             else
             {
-                for (int i = 0; i < _engine.GetCategory().Count(); i++)
+                for (int i = 0; i < data.Count(); i++)
                 {
                     ListViewGroup viewGroup;
 
-                    var category = _engine.GetCategory().Keys.ElementAt(i);
+                    var category = data.Keys.ElementAt(i);
 
                     if (listView1.Groups[category] == null)
                     {
@@ -60,8 +60,7 @@ namespace FulgurantArtAnn
                         viewGroup = listView1.Groups[category];
                     }
 
-
-                    var images = _engine.GetImage();
+                    var images = GetImage();
 
                     MessageBox.Show(images.Count().ToString());
 
@@ -74,6 +73,19 @@ namespace FulgurantArtAnn
                     listView1.Items.Add(item);
                 }
             }
+        }
+
+        public List<Bitmap> GetImage()
+        {
+            var image = new List<Bitmap>();
+            var paths = Directory.GetDirectories("pictures");
+            foreach (var path in paths)
+            {
+                var imagePaths = Directory.GetFiles(path);
+                var images = imagePaths.Select(imagePath => new Bitmap(imagePath));
+                image.AddRange(images);
+            }
+            return image;
         }
     }
 }

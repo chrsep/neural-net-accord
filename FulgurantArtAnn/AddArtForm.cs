@@ -9,8 +9,6 @@ namespace FulgurantArtAnn
 {
     public partial class AddArtForm : Form
     {
-        private readonly NeuralEngine _engine;
-
         private readonly Form _parentForm;
         private List<string> _paths;
         private List<string> _fileNames;
@@ -20,7 +18,6 @@ namespace FulgurantArtAnn
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
             _parentForm = parent;
-            _engine = NeuralEngine.Instance;
             _paths = new List<string>();
             _fileNames = new List<string>();
             var availableCategories = Directory.GetDirectories("pictures").ToList();
@@ -35,7 +32,7 @@ namespace FulgurantArtAnn
             if (dialog.ShowDialog() != DialogResult.OK) return;
             _paths.AddRange(dialog.FileNames.ToList());  
             _fileNames.AddRange(dialog.SafeFileNames);
-            
+            comboBox1.Enabled = true;
             imageList.Images.Clear();
             foreach (var path in _paths)
                 imageList.Images.Add(Image.FromFile(path));
@@ -100,7 +97,7 @@ namespace FulgurantArtAnn
                 }
                 
             }
-            _engine.TrainClasificationNetwork();
+            NeuralEngine.Instance.TrainClasificationNetwork();
         }
     }
 }

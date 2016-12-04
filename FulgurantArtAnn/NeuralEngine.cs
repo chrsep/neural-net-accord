@@ -109,7 +109,7 @@ namespace FulgurantArtAnn
         /// </summary>
         /// <param name="image">Image to be processed</param>
         /// <returns>Processed image (10x10, black and white image)</returns>
-        public Bitmap PreprocessImage(Bitmap image)
+        public static Bitmap PreprocessImage(Bitmap image)
         {
             image = Grayscale.CommonAlgorithms.RMY.Apply(image);
             image = new Threshold(127).Apply(image);
@@ -117,11 +117,27 @@ namespace FulgurantArtAnn
             return new ResizeBilinear(10, 10).Apply(image);
         }
 
+        public static bool IsExist() => _instance != null;
+
+        /// <summary>
+        ///     Quick function to turn list of image paths into
+        ///     preprocessed image that has been converted into array, ready for training
+        /// </summary>
+        /// <param name="filePaths">Array of file paths</param>
+        /// <returns>Array of images in the form of array</returns>
+        private double[][] PreprocessImageFromFiles(string[] filePaths)
+        {
+            var result = new double[filePaths.Length][];
+            for (var i = 0; i < filePaths.Length; i++)
+                _imageToArray.Convert(PreprocessImage(new Bitmap(filePaths[i])), out result[i]);
+            return result;
+        }
+
         /// <summary>
         ///     Gets all of images from picture folder
         /// </summary>
         /// <returns>Dictionary of category name and image array</returns>
-        private Dictionary<string, List<Bitmap>> GetImages() =>
+        public static Dictionary<string, List<Bitmap>> GetImages() =>
             Directory.GetDirectories("pictures").ToDictionary(
                 path => new DirectoryInfo(path).Name,
                 path => Directory.GetFiles(path).Select(file => new Bitmap(file)).ToList());
@@ -141,7 +157,7 @@ namespace FulgurantArtAnn
         /// </summary>
         /// <param name="image">Image to Crop</param>
         /// <returns>Cropped image</returns>
-        private Bitmap Crop(Bitmap image)
+        private static Bitmap Crop(Bitmap image)
         {
             int xMin = image.Width,
                 yMin = image.Height,
@@ -169,20 +185,6 @@ namespace FulgurantArtAnn
         }
 
         /// <summary>
-        ///     Quick function to turn list of image paths into
-        ///     preprocessed image that has been converted into array, ready for training
-        /// </summary>
-        /// <param name="filePaths">Array of file paths</param>
-        /// <returns>Array of images in the form of array</returns>
-        private double[][] PreprocessImageFromFiles(string[] filePaths)
-        {
-            var result = new double[filePaths.Length][];
-            for (var i = 0; i < filePaths.Length; i++)
-                _imageToArray.Convert(PreprocessImage(new Bitmap(filePaths[i])), out result[i]);
-            return result;
-        }
-
-        /// <summary>
         ///     Gets all of images from picture folder
         /// </summary>
         /// <returns>Dictionary of category name and image array</returns>
@@ -190,22 +192,5 @@ namespace FulgurantArtAnn
             Directory.GetDirectories("pictures").ToDictionary(
                 path => new DirectoryInfo(path).Name,
                 path => PreprocessImageFromFiles(Directory.GetFiles(path)));
-
-        public bool GetList() => _allData.Count() != 0;
-
-        public Dictionary<string, double[][]> GetCategory() => _allData;
-
-        public List<Bitmap> GetImage()
-        {
-            var image = new List<Bitmap>();
-            var paths = Directory.GetDirectories("pictures");
-            foreach (var path in paths)
-            {
-                var imagePaths = Directory.GetFiles(path);
-                var images = imagePaths.Select(imagePath => new Bitmap(imagePath));
-                image.AddRange(images);
-            }
-            return image;
-        }
     }
 }

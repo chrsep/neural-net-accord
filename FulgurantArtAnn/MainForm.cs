@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.IO.Directory;
@@ -17,6 +11,7 @@ namespace FulgurantArtAnn
         {
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
+            
         }
 
         private void buttonAddArt_Click(object sender, EventArgs e)
@@ -47,7 +42,8 @@ namespace FulgurantArtAnn
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            NeuralEngine.Instance.Save();
+            if (NeuralEngine.IsExist())
+                NeuralEngine.Instance.Save();
             Application.Exit();
         }
 
