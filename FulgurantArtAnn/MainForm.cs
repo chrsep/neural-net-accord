@@ -47,6 +47,7 @@ namespace FulgurantArtAnn
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
+            NeuralEngine.Instance.Save();
             Application.Exit();
         }
 
