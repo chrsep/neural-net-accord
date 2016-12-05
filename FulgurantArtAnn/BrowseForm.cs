@@ -8,7 +8,6 @@ namespace FulgurantArtAnn
     public partial class BrowseForm : Form
     {
         private readonly Form _parentForm;
-        public string pic;
 
         public BrowseForm(Form parent)
         {
@@ -67,18 +66,8 @@ namespace FulgurantArtAnn
 
         private void listView1_DoubleClick(object sender, EventArgs e)
         {
-            string pic = listView1.SelectedItems[0].Text.ToString();
-            MessageBox.Show(pic);
-
-            this.Hide();
-            Form artDetail = new ArtDetail();
-            artDetail.Show();
-
-        }
-
-        public string picture() {
-            string pic = listView1.SelectedItems[0].Text.ToString();
-            return pic;
+            new ArtDetail(this, listView1.SelectedItems[0]).Show();
+            Hide();
         }
     }
 }

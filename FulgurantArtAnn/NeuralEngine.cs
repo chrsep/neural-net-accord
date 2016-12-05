@@ -25,20 +25,26 @@ namespace FulgurantArtAnn
 
         private NeuralEngine()
         {
+            _allData = GetTrainingData();
+            _imageToArray = new ImageToArray(0, 1);
+
             _classificationNetwork = File.Exists("BPNNBrain.net")
                 ? Network.Load("BPNNBrain.net") as ActivationNetwork
                 : new ActivationNetwork(new SigmoidFunction(), 100, 10, 1);
 
             _clusteringNetwork = File.Exists("SOMBrain.net")
                 ? Network.Load("SOMBrain.net") as DistanceNetwork
-                : new DistanceNetwork(100, 100);
-
-            _imageToArray = new ImageToArray(0, 1);
-            _allData = GetTrainingData();
+                : CreateNewDistanceNetwork();
         }
 
         //PUBLIC FUNCTIONS==================================================================
         public static NeuralEngine Instance => _instance ?? (_instance = new NeuralEngine());
+
+        /// <summary>
+        /// Check whether neural engine singleton instance already exists
+        /// </summary>
+        /// <returns>True if Neural Engine singleton alreade exists, false otherwise</returns>
+        public static bool IsExist() => _instance != null;
 
         /// <summary>
         ///     Trains Network for classification (Activation Network, Backpropagation)
@@ -48,13 +54,11 @@ namespace FulgurantArtAnn
         public double TrainClasificationNetwork(int epoch = 10000)
         {
             var dataArray = _allData.Values.ToArray();
-            var input = new List<double[]>();
+            var input = GetDataArray(dataArray);
             var output = new List<double[]>();
             for (var i = 0; i < dataArray.Length; i++)
-            {
-                input.AddRange(dataArray[i]);
                 output.AddRange(dataArray[i].Select(data => new double[] {i}));
-            }
+
             output = NormalizeOutput(output);
             var trainer = new BackPropagationLearning(_classificationNetwork);
             var error = 0d;
@@ -73,23 +77,10 @@ namespace FulgurantArtAnn
         // TODO: Build the correct clustering network
         public double TrainClusteringNetwork(int epoch = 10000)
         {
-            var dataArray = _allData.Values.ToList();
-            var input = new List<double[]>();
-            dataArray.ForEach(data => input.AddRange(data));
-            var pca = new PrincipalComponentAnalysis(input.ToArray());
-            pca.Compute();
-            var pcaResult = new double[pca.Result.GetLength(0)][];
-            for (int i = 0; i < pca.Result.GetLength(0); i++)
-            {
-                for (int j = 0; j < pca.Result.GetLength(1); j++)
-                {
-                    pcaResult[i][j] = pca.Result[i, j];
-                }
-            }
-
+            var pcaResult = ComputePca(GetDataArray(_allData.Values.ToList()));
             var trainer = new SOMLearning(_clusteringNetwork);
             var error = 0d;
-            for (int i = 0; i < epoch; i++)
+            for (var i = 0; i < epoch; i++)
             {
                 error = trainer.RunEpoch(pcaResult);
                 if (error < 0.0001)
@@ -108,7 +99,7 @@ namespace FulgurantArtAnn
         {
             double[] array;
             _imageToArray.Convert(processedImage, out array);
-            var result = (int) _classificationNetwork.Compute(array)[0] * _allData.Count;
+            var result = (int) _classificationNetwork.Compute(array)[0]*_allData.Count;
             return _allData.Keys.ToArray()[result];
         }
 
@@ -127,31 +118,37 @@ namespace FulgurantArtAnn
                     file => pathImageDictionary.Add(file, new Bitmap(file))
                 )
             );
-
             pathImageDictionary.Remove(inputFilePath);
-            var clusterImageDictionary = new Dictionary<int, List<Bitmap>>();
-            foreach (var pair in pathImageDictionary)
+            pathImageDictionary.Add(inputFilePath, new Bitmap(inputFilePath));
+
+            var preprocessedImageArray = ComputePca(pathImageDictionary.Values.Select(bitmaps =>
             {
-                var imageArray = new double[100];
-                _imageToArray.Convert(PreprocessImage(pair.Value), out imageArray);
-                _clusteringNetwork.Compute(imageArray);
-                int cluster = _clusteringNetwork.GetWinner();
+                double[] imageArray;
+                _imageToArray.Convert(PreprocessImage(bitmaps), out imageArray);
+                return imageArray;
+            }).ToList());
+
+            var clusterImageDictionary = new Dictionary<int, List<Bitmap>>();
+            for (var index = 0; index < preprocessedImageArray.Length; index++)
+            {
+                var image = preprocessedImageArray[index];
+                _clusteringNetwork.Compute(image);
+                var cluster = _clusteringNetwork.GetWinner();
                 if (clusterImageDictionary.ContainsKey(cluster))
                 {
-                    clusterImageDictionary[cluster].Add(pair.Value);
+                    clusterImageDictionary[cluster].Add(pathImageDictionary.ElementAt(index).Value);
                 }
                 else
                 {
                     clusterImageDictionary.Add(cluster, new List<Bitmap>());
-                    clusterImageDictionary[cluster].Add(pair.Value);
+                    clusterImageDictionary[cluster].Add(pathImageDictionary.ElementAt(index).Value);
                 }
             }
 
-            var inputImageArray = new double[100];
-            _imageToArray.Convert(PreprocessImage(new Bitmap(inputFilePath)), out inputImageArray);
-            _clusteringNetwork.Compute(inputImageArray);
-            int inputCluster = _clusteringNetwork.GetWinner();
-            return clusterImageDictionary.ContainsKey(inputCluster) ? clusterImageDictionary[inputCluster] : new List<Bitmap>();
+            var inputCluster = clusterImageDictionary.Last().Key;
+            return clusterImageDictionary.ContainsKey(inputCluster)
+                ? clusterImageDictionary[inputCluster]
+                : new List<Bitmap>();
         }
 
         /// <summary>
@@ -176,11 +173,6 @@ namespace FulgurantArtAnn
             return new ResizeBilinear(10, 10).Apply(image);
         }
 
-        /// <summary>
-        /// Check whether neural engine singleton instance already exists
-        /// </summary>
-        /// <returns>True if Neural Engine singleton alreade exists, false otherwise</returns>
-        public static bool IsExist() => _instance != null;
 
         /// <summary>
         ///     Quick function to turn list of image paths into
@@ -211,7 +203,6 @@ namespace FulgurantArtAnn
             _allData = GetTrainingData();
         }
 
-
         // PRIVATE FUNCTIONS===================================================================================================
 
         /// <summary>
@@ -220,7 +211,7 @@ namespace FulgurantArtAnn
         /// <param name="outputs">Array of output to be normalized</param>
         /// <returns>Normalized Output</returns>
         private List<double[]> NormalizeOutput(List<double[]> outputs) =>
-            outputs.Select(output => new[] {output[0] / _allData.Count}).ToList();
+            outputs.Select(output => new[] {output[0]/_allData.Count}).ToList();
 
         /// <summary>
         ///     Reduce image size to only contain the important information (Part of image that has content above threshold)
@@ -270,12 +261,48 @@ namespace FulgurantArtAnn
             {
                 for (var j = 0; j < image.Height; j++)
                 {
-                    int input = image.GetPixel(i, j).B / 255;
+                    int input = image.GetPixel(i, j).B/255;
                     inputNormal[i + j] = input;
                 }
             }
 
             return inputNormal;
+        }
+
+        private DistanceNetwork CreateNewDistanceNetwork()
+        {
+            var numberOfCategory = _allData.Count;
+            var result = 0;
+            while (result*result < numberOfCategory)
+            {
+                result++;
+            }
+            var arrayOfAllImages = new List<double[]>();
+            _allData.Values.ToList().ForEach(images => arrayOfAllImages.AddRange(images));
+            return new DistanceNetwork(arrayOfAllImages.Count, result*result);
+        }
+
+        private List<T> GetDataArray<T>(IEnumerable<IEnumerable<T>> input)
+        {
+            var result = new List<T>();
+            input.ToList().ForEach(data => result.AddRange(data));
+            return result;
+        }
+
+        private double[][] ComputePca(List<double[]> input)
+        {
+            var pca = new PrincipalComponentAnalysis(input.ToArray());
+            pca.Compute();
+            var pcaResult = new double[pca.Result.GetLength(0)][];
+            for (int i = 0; i < pca.Result.GetLength(0); i++)
+            {
+                pcaResult[i] = new double[pca.Result.GetLength(1)];
+                for (int j = 0; j < pca.Result.GetLength(1); j++)
+                {
+                    pcaResult[i][j] = pca.Result[i, j];
+                }
+            }
+            return pcaResult;
         }
     }
 }
