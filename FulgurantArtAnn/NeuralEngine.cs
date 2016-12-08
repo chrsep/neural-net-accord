@@ -59,7 +59,8 @@ namespace FulgurantArtAnn
             var trainer = new BackPropagationLearning(_classificationNetwork);
             var error = 0d;
             for (var i = 0; i < epoch; i++)
-                error = trainer.RunEpoch(datum.Select(data => data.Value).ToArray(), NormalizeOutput(datum.Select(data => data.Key).ToList()).ToArray());
+                error = trainer.RunEpoch(datum.Select(data => data.Value).ToArray(),
+                    NormalizeOutput(datum.Select(data => data.Key).ToList()).ToArray());
 
             // BUG: Error hovers around 0.4, cant go lower
             return error;
@@ -75,11 +76,15 @@ namespace FulgurantArtAnn
             var random = new Random();
             var result = new List<KeyValuePair<int, double[]>>();
             for (var i = 0; i < input.Count(); i++)
-                result.AddRange(input.ElementAt(i).ToList().Select(imageByCategory => new KeyValuePair<int, double[]>(i, imageByCategory)));
-            var shuffledResult = result.OrderBy(unused => random.Next()); ;
+                result.AddRange(
+                    input.ElementAt(i)
+                        .ToList()
+                        .Select(imageByCategory => new KeyValuePair<int, double[]>(i, imageByCategory)));
+            var shuffledResult = result.OrderBy(unused => random.Next());
+            ;
             for (var i = 0; i < 8; i++)
                 shuffledResult = shuffledResult.OrderBy(unused => random.Next());
-            
+
             return shuffledResult.ToList();
         }
 
@@ -115,8 +120,8 @@ namespace FulgurantArtAnn
             double[] array;
             _imageToArray.Convert(processedImage, out array);
             var computedValue = _classificationNetwork.Compute(array)[0];
-            var result = (int) Math.Round(computedValue * (_allData.Count - 1)) ;
-            return _allData.Keys.ToArray()[result ];
+            var result = (int) Math.Round(computedValue*(_allData.Count - 1));
+            return _allData.Keys.ToArray()[result];
         }
 
         /// <summary>
@@ -124,42 +129,38 @@ namespace FulgurantArtAnn
         /// </summary>
         /// <param name="inputFilePath">full path to the image file</param>
         /// <returns>List of bitmap similar to the input, empty bitmap list if no image is similar</returns>
-        public List<Bitmap> FindSimilar(string inputFilePath)
+        public List<KeyValuePair<string, Bitmap>> FindSimilar(string inputFilePath)
         {
+            //Train SOM
             TrainClasificationNetwork();
+            // Get List of Categories
             var categories = _allData.Keys.ToList();
-            var pathImageDictionary = new Dictionary<string, Bitmap>();
-
-            categories.ForEach(
-                category => Directory.GetFiles("pictures/" + category).ToList().ForEach(
-                    file => pathImageDictionary.Add(file, new Bitmap(file))
-                )
-            );
-
-            List<KeyValuePair<string, double[]>> preprocessedImageArray = pathImageDictionary.Select(data =>
+            var listOfImagePaths = new List<string>();
+            // Get all image paths and associate it with it's name, put it in listOfImagePaths
+            categories.ForEach(category => listOfImagePaths.AddRange(Directory.GetFiles("pictures/" + category)));
+            // Create another list of pair of preprocessed image and it's name
+            var preprocessedImageArray = listOfImagePaths.Select(data =>
             {
                 double[] imageArray;
-                _imageToArray.Convert(PreprocessImage(data.Value), out imageArray);
-                return new KeyValuePair<string, double[]>(data.Key, imageArray);
+                _imageToArray.Convert(PreprocessImage(new Bitmap(data)), out imageArray);
+                return new KeyValuePair<string, double[]>(data, imageArray);
             }).ToList();
 
-            int chosenImageCluster = 0, i =0;
+            int chosenImageCluster = 0, i = 0;
             var pca = ComputePca(preprocessedImageArray.Select(data => data.Value).ToList());
+            // Compute every image, and get its cluster. Save it into List of keyvaluepair (key = pathName, value = cluster)
             var clusterImageDictionary = preprocessedImageArray.Select(pair =>
             {
                 _clusteringNetwork.Compute(pca[i]);
-                var cluster = _clusteringNetwork.GetWinner();
-                if (pair.Key.Equals(inputFilePath))
-                {
-                    chosenImageCluster = cluster;
-                }
                 i++;
+                var cluster = _clusteringNetwork.GetWinner();
+                if (pair.Key.Equals(inputFilePath)) chosenImageCluster = cluster;
                 return new KeyValuePair<string, int>(pair.Key, cluster);
             });
-
+            // return list of bitmap that belong to the same cluster to the inputFilePath
             return
-                clusterImageDictionary.Where(data => data.Value == chosenImageCluster)
-                    .Select(data => new Bitmap(data.Key)).ToList();
+                clusterImageDictionary.Where(data => data.Value == chosenImageCluster && data.Key != inputFilePath)
+                    .Select(data => new KeyValuePair<string,Bitmap>(data.Key,new Bitmap(data.Key))).ToList();
         }
 
         /// <summary>
@@ -178,9 +179,9 @@ namespace FulgurantArtAnn
         /// <returns>Processed image (10x10, black and white image)</returns>
         public static Bitmap PreprocessImage(Bitmap image)
         {
-            //image = Grayscale.CommonAlgorithms.RMY.Apply(image);
-            // = new Threshold(127).Apply(image);
-            //image = Crop(image);
+            image = Grayscale.CommonAlgorithms.RMY.Apply(image);
+            image = new Threshold(127).Apply(image);
+            image = Crop(image);
             return new ResizeBilinear(10, 10).Apply(image);
         }
 
@@ -221,8 +222,8 @@ namespace FulgurantArtAnn
         /// </summary>
         /// <param name="outputs">Array of output to be normalized</param>
         /// <returns>Normalized Output</returns>
-        private List<double[]> NormalizeOutput(List<int> outputs)=>
-            outputs.Select(output => new[] { ((double) output) / _allData.Count }).ToList();
+        private List<double[]> NormalizeOutput(List<int> outputs) =>
+            outputs.Select(output => new[] {((double) output)/_allData.Count}).ToList();
 
         /// <summary>
         ///     Reduce image size to only contain the important information (Part of image that has content above threshold)

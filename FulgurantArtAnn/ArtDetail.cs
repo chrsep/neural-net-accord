@@ -21,7 +21,7 @@ namespace FulgurantArtAnn
 
             imageList1.Images.Clear();
             foreach (var image in similarImages)
-                imageList1.Images.Add(image);
+                imageList1.Images.Add(image.Value);
 
             listView1.Clear();
             for (var i = 0; i < imageList1.Images.Count; i++)
