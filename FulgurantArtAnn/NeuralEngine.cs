@@ -20,8 +20,8 @@ namespace FulgurantArtAnn
         private static NeuralEngine _instance;
         private readonly ImageToArray _imageToArray;
         private Dictionary<string, double[][]> _allData;
-        private readonly ActivationNetwork _classificationNetwork;
-        private readonly DistanceNetwork _clusteringNetwork;
+        private ActivationNetwork _classificationNetwork;
+        private DistanceNetwork _clusteringNetwork;
 
         private NeuralEngine()
         {
@@ -53,6 +53,7 @@ namespace FulgurantArtAnn
         /// <returns>Neural network Error</returns>
         public double TrainClasificationNetwork(int epoch = 10000)
         {
+            _classificationNetwork = new ActivationNetwork(new SigmoidFunction(), 100, 10, 1);
             var dataArray = _allData.Values.ToArray();
             var datum = ShuffleData(dataArray);
             var trainer = new BackPropagationLearning(_classificationNetwork);
@@ -90,6 +91,7 @@ namespace FulgurantArtAnn
         // TODO: Build the correct clustering network
         public double TrainClusteringNetwork(int epoch = 10000)
         {
+            _clusteringNetwork = CreateNewDistanceNetwork();
             var pcaResult = ComputePca(RemoveFromCategory(_allData.Values.ToList()));
             var trainer = new SOMLearning(_clusteringNetwork);
             var error = 0d;
@@ -176,9 +178,9 @@ namespace FulgurantArtAnn
         /// <returns>Processed image (10x10, black and white image)</returns>
         public static Bitmap PreprocessImage(Bitmap image)
         {
-            image = Grayscale.CommonAlgorithms.RMY.Apply(image);
-            image = new Threshold(127).Apply(image);
-            image = Crop(image);
+            //image = Grayscale.CommonAlgorithms.RMY.Apply(image);
+            // = new Threshold(127).Apply(image);
+            //image = Crop(image);
             return new ResizeBilinear(10, 10).Apply(image);
         }
 
