@@ -65,7 +65,7 @@ namespace FulgurantArtAnn
         }
 
         /// <summary>
-        /// Shuffle data around and reorganize it into keyvaluepair(output, input)
+        /// Shuffle data around and reorganize it into keyvaluepair(output, input).
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
@@ -90,7 +90,7 @@ namespace FulgurantArtAnn
         // TODO: Build the correct clustering network
         public double TrainClusteringNetwork(int epoch = 10000)
         {
-            var pcaResult = ComputePca(ReduceDimension(_allData.Values.ToList()));
+            var pcaResult = ComputePca(RemoveFromCategory(_allData.Values.ToList()));
             var trainer = new SOMLearning(_clusteringNetwork);
             var error = 0d;
             for (var i = 0; i < epoch; i++)
@@ -124,7 +124,8 @@ namespace FulgurantArtAnn
         /// <returns>List of bitmap similar to the input, empty bitmap list if no image is similar</returns>
         public List<Bitmap> FindSimilar(string inputFilePath)
         {
-            var categories = _allData.Keys.ToArray().ToList();
+            TrainClasificationNetwork();
+            var categories = _allData.Keys.ToList();
             var pathImageDictionary = new Dictionary<string, Bitmap>();
 
             categories.ForEach(
@@ -132,30 +133,31 @@ namespace FulgurantArtAnn
                     file => pathImageDictionary.Add(file, new Bitmap(file))
                 )
             );
-            pathImageDictionary.Remove(inputFilePath);
-            pathImageDictionary.Add(inputFilePath, new Bitmap(inputFilePath));
 
-            var preprocessedImageArray = ComputePca(pathImageDictionary.Values.Select(bitmaps =>
+            List<KeyValuePair<string, double[]>> preprocessedImageArray = pathImageDictionary.Select(data =>
             {
                 double[] imageArray;
-                _imageToArray.Convert(PreprocessImage(bitmaps), out imageArray);
-                return imageArray;
-            }).ToList());
+                _imageToArray.Convert(PreprocessImage(data.Value), out imageArray);
+                return new KeyValuePair<string, double[]>(data.Key, imageArray);
+            }).ToList();
 
-            var clusterImageDictionary = new Dictionary<int, List<Bitmap>>();
-            for (var index = 0; index < preprocessedImageArray.Length; index++)
+            int chosenImageCluster = 0, i =0;
+            var pca = ComputePca(preprocessedImageArray.Select(data => data.Value).ToList());
+            var clusterImageDictionary = preprocessedImageArray.Select(pair =>
             {
-                _clusteringNetwork.Compute(preprocessedImageArray[index]);
+                _clusteringNetwork.Compute(pca[i]);
                 var cluster = _clusteringNetwork.GetWinner();
-                if (!clusterImageDictionary.ContainsKey(cluster))
-                    clusterImageDictionary.Add(cluster, new List<Bitmap>());
-                clusterImageDictionary[cluster].Add(pathImageDictionary.ElementAt(index).Value);
-            }
+                if (pair.Key.Equals(inputFilePath))
+                {
+                    chosenImageCluster = cluster;
+                }
+                i++;
+                return new KeyValuePair<string, int>(pair.Key, cluster);
+            });
 
-            var inputCluster = clusterImageDictionary.Last().Key;
-            return clusterImageDictionary.ContainsKey(inputCluster)
-                ? clusterImageDictionary[inputCluster]
-                : new List<Bitmap>();
+            return
+                clusterImageDictionary.Where(data => data.Value == chosenImageCluster)
+                    .Select(data => new Bitmap(data.Key)).ToList();
         }
 
         /// <summary>
@@ -289,7 +291,7 @@ namespace FulgurantArtAnn
             return new DistanceNetwork(arrayOfAllImages.Count, result*result);
         }
 
-        private List<T> ReduceDimension<T>(IEnumerable<IEnumerable<T>> input)
+        private List<T> RemoveFromCategory<T>(IEnumerable<IEnumerable<T>> input)
         {
             var result = new List<T>();
             input.ToList().ForEach(data => result.AddRange(data));
