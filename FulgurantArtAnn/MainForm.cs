@@ -9,6 +9,7 @@ namespace FulgurantArtAnn
     {
         public MainForm()
         {
+            var initializeSingleton = NeuralEngine.Instance;
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
             

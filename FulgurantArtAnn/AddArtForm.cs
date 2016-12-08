@@ -75,18 +75,14 @@ namespace FulgurantArtAnn
 
         private void SubmitArtBtn_Click(object sender, EventArgs e)
         {
-            string directory = "pictures/";
+            var directory = "pictures/";
             if (comboBox1.SelectedItem.Equals("Add new categories"))
-            {
                 directory += ArtStudioTxtBox.Text;
-            }
             else
-            {
                 directory += comboBox1.SelectedItem;
-            }
+            
             Directory.CreateDirectory(directory);
             for (int i = 0; i < _paths.Count; i++)
-            {
                 try
                 {
                     File.Copy(_paths[i], directory + "/" + _fileNames[i]);
@@ -96,9 +92,9 @@ namespace FulgurantArtAnn
                     MessageBox.Show(_fileNames[i] + " already Exist!!");
                 }
                 
-            }
-            NeuralEngine.Instance.TrainClasificationNetwork();
-            NeuralEngine.Instance.TrainClusteringNetwork();
+            
+            //Add the new data to the list by reloading all the list
+            NeuralEngine.Instance.ReloadData();
         }
     }
 }

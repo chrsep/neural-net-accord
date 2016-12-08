@@ -13,7 +13,7 @@ namespace FulgurantArtAnn
 {
     /// <summary>
     ///     Neural Network Singletion, Handles all neural network and data related task
-    ///     Example: Training, save data, recognize image, etc
+    ///     Example: Training, save data, recognize image, etc..
     /// </summary>
     internal class NeuralEngine
     {
@@ -54,19 +54,32 @@ namespace FulgurantArtAnn
         public double TrainClasificationNetwork(int epoch = 10000)
         {
             var dataArray = _allData.Values.ToArray();
-            var input = GetDataArray(dataArray);
-            var output = new List<double[]>();
-            for (var i = 0; i < dataArray.Length; i++)
-                output.AddRange(dataArray[i].Select(data => new double[] {i}));
-
-            output = NormalizeOutput(output);
+            var datum = ShuffleData(dataArray);
             var trainer = new BackPropagationLearning(_classificationNetwork);
             var error = 0d;
             for (var i = 0; i < epoch; i++)
-                error = trainer.RunEpoch(input.ToArray(), output.ToArray());
+                error = trainer.RunEpoch(datum.Select(data => data.Value).ToArray(), NormalizeOutput(datum.Select(data => data.Key).ToList()).ToArray());
 
             // BUG: Error hovers around 0.4, cant go lower
             return error;
+        }
+
+        /// <summary>
+        /// Shuffle data around and reorganize it into keyvaluepair(output, input)
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public List<KeyValuePair<int, double[]>> ShuffleData(IEnumerable<IEnumerable<double[]>> input)
+        {
+            var random = new Random();
+            var result = new List<KeyValuePair<int, double[]>>();
+            for (var i = 0; i < input.Count(); i++)
+                result.AddRange(input.ElementAt(i).ToList().Select(imageByCategory => new KeyValuePair<int, double[]>(i, imageByCategory)));
+            var shuffledResult = result.OrderBy(unused => random.Next()); ;
+            for (var i = 0; i < 8; i++)
+                shuffledResult = shuffledResult.OrderBy(unused => random.Next());
+            
+            return shuffledResult.ToList();
         }
 
         /// <summary>
@@ -77,7 +90,7 @@ namespace FulgurantArtAnn
         // TODO: Build the correct clustering network
         public double TrainClusteringNetwork(int epoch = 10000)
         {
-            var pcaResult = ComputePca(GetDataArray(_allData.Values.ToList()));
+            var pcaResult = ComputePca(ReduceDimension(_allData.Values.ToList()));
             var trainer = new SOMLearning(_clusteringNetwork);
             var error = 0d;
             for (var i = 0; i < epoch; i++)
@@ -99,8 +112,9 @@ namespace FulgurantArtAnn
         {
             double[] array;
             _imageToArray.Convert(processedImage, out array);
-            var result = (int) _classificationNetwork.Compute(array)[0]*_allData.Count;
-            return _allData.Keys.ToArray()[result];
+            var computedValue = _classificationNetwork.Compute(array)[0];
+            var result = (int) Math.Round(computedValue * (_allData.Count - 1)) ;
+            return _allData.Keys.ToArray()[result ];
         }
 
         /// <summary>
@@ -131,18 +145,11 @@ namespace FulgurantArtAnn
             var clusterImageDictionary = new Dictionary<int, List<Bitmap>>();
             for (var index = 0; index < preprocessedImageArray.Length; index++)
             {
-                var image = preprocessedImageArray[index];
-                _clusteringNetwork.Compute(image);
+                _clusteringNetwork.Compute(preprocessedImageArray[index]);
                 var cluster = _clusteringNetwork.GetWinner();
-                if (clusterImageDictionary.ContainsKey(cluster))
-                {
-                    clusterImageDictionary[cluster].Add(pathImageDictionary.ElementAt(index).Value);
-                }
-                else
-                {
+                if (!clusterImageDictionary.ContainsKey(cluster))
                     clusterImageDictionary.Add(cluster, new List<Bitmap>());
-                    clusterImageDictionary[cluster].Add(pathImageDictionary.ElementAt(index).Value);
-                }
+                clusterImageDictionary[cluster].Add(pathImageDictionary.ElementAt(index).Value);
             }
 
             var inputCluster = clusterImageDictionary.Last().Key;
@@ -210,8 +217,8 @@ namespace FulgurantArtAnn
         /// </summary>
         /// <param name="outputs">Array of output to be normalized</param>
         /// <returns>Normalized Output</returns>
-        private List<double[]> NormalizeOutput(List<double[]> outputs) =>
-            outputs.Select(output => new[] {output[0]/_allData.Count}).ToList();
+        private List<double[]> NormalizeOutput(List<int> outputs)=>
+            outputs.Select(output => new[] { ((double) output) / _allData.Count }).ToList();
 
         /// <summary>
         ///     Reduce image size to only contain the important information (Part of image that has content above threshold)
@@ -261,7 +268,7 @@ namespace FulgurantArtAnn
             {
                 for (var j = 0; j < image.Height; j++)
                 {
-                    int input = image.GetPixel(i, j).B/255;
+                    var input = (double) image.GetPixel(i, j).B/255;
                     inputNormal[i + j] = input;
                 }
             }
@@ -272,7 +279,7 @@ namespace FulgurantArtAnn
         private DistanceNetwork CreateNewDistanceNetwork()
         {
             var numberOfCategory = _allData.Count;
-            var result = 0;
+            var result = 2;
             while (result*result < numberOfCategory)
             {
                 result++;
@@ -282,11 +289,11 @@ namespace FulgurantArtAnn
             return new DistanceNetwork(arrayOfAllImages.Count, result*result);
         }
 
-        private List<T> GetDataArray<T>(IEnumerable<IEnumerable<T>> input)
+        private List<T> ReduceDimension<T>(IEnumerable<IEnumerable<T>> input)
         {
             var result = new List<T>();
             input.ToList().ForEach(data => result.AddRange(data));
-            return result;
+            return result.ToList();
         }
 
         private double[][] ComputePca(List<double[]> input)
