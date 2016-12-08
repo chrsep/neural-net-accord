@@ -19,7 +19,7 @@ namespace FulgurantArtAnn
     {
         private static NeuralEngine _instance;
         private readonly ImageToArray _imageToArray;
-        private Dictionary<string, double[][]> _allData;
+        private Dictionary<string, List<double[]>> _allData;
         private ActivationNetwork _classificationNetwork;
         private DistanceNetwork _clusteringNetwork;
 
@@ -132,7 +132,7 @@ namespace FulgurantArtAnn
         public List<KeyValuePair<string, Bitmap>> FindSimilar(string inputFilePath)
         {
             //Train SOM
-            TrainClasificationNetwork();
+            TrainClusteringNetwork();
             // Get List of Categories
             var categories = _allData.Keys.ToList();
             var listOfImagePaths = new List<string>();
@@ -192,13 +192,13 @@ namespace FulgurantArtAnn
         /// </summary>
         /// <param name="filePaths">Array of file paths</param>
         /// <returns>Array of images in the form of array</returns>
-        private double[][] PreprocessImageFromFiles(string[] filePaths)
+        private List<double[]> PreprocessImageFromFiles(string[] filePaths)
         {
             var result = new double[filePaths.Length][];
             for (var i = 0; i < filePaths.Length; i++)
                 // TODO: Find out wether to use imagetoarray or to use denormalization method
                 result[i] = NormalizeInput(PreprocessImage(new Bitmap(filePaths[i])));
-            return result;
+            return result.ToList();
         }
 
         /// <summary>
@@ -210,7 +210,7 @@ namespace FulgurantArtAnn
                 path => new DirectoryInfo(path).Name,
                 path => Directory.GetFiles(path).Select(file => new Bitmap(file)).ToList());
 
-        public void ReloadData()
+        public void AddData()
         {
             _allData = GetTrainingData();
         }
@@ -261,7 +261,7 @@ namespace FulgurantArtAnn
         ///     Gets all of images from picture folder
         /// </summary>
         /// <returns>Dictionary of category name and image array</returns>
-        private Dictionary<string, double[][]> GetTrainingData() =>
+        private Dictionary<string, List<double[]>> GetTrainingData() =>
             Directory.GetDirectories("pictures").ToDictionary(
                 path => new DirectoryInfo(path).Name,
                 path => PreprocessImageFromFiles(Directory.GetFiles(path)));
@@ -315,6 +315,19 @@ namespace FulgurantArtAnn
                 }
             }
             return pcaResult;
+        }
+
+        public void AddData(string directory, string imageListImage)
+        {
+            var image = PreprocessImageFromFiles(new [] {imageListImage});
+            if (_allData.ContainsKey(directory))
+            {
+                _allData[directory].Add(image.First());
+            }
+            else
+            {
+                _allData.Add(directory, image);
+            }
         }
     }
 }

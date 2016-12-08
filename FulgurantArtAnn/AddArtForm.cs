@@ -30,7 +30,7 @@ namespace FulgurantArtAnn
         private void AddNewArt_Click(object sender, EventArgs e)
         {
             if (dialog.ShowDialog() != DialogResult.OK) return;
-            _paths.AddRange(dialog.FileNames.ToList());  
+            _paths.AddRange(dialog.FileNames.ToList());
             _fileNames.AddRange(dialog.SafeFileNames);
             comboBox1.Enabled = true;
             imageList.Images.Clear();
@@ -40,7 +40,7 @@ namespace FulgurantArtAnn
             ViewArt.Clear();
             for (var i = 0; i < imageList.Images.Count; i++)
             {
-                var item = new ListViewItem(_fileNames[i],i);
+                var item = new ListViewItem(_fileNames[i], i);
                 ViewArt.Items.Add(item);
             }
 
@@ -75,26 +75,27 @@ namespace FulgurantArtAnn
 
         private void SubmitArtBtn_Click(object sender, EventArgs e)
         {
-            var directory = "pictures/";
-            if (comboBox1.SelectedItem.Equals("Add new categories"))
-                directory += ArtStudioTxtBox.Text;
-            else
-                directory += comboBox1.SelectedItem;
-            
-            Directory.CreateDirectory(directory);
+            var directory = comboBox1.SelectedItem.Equals("Add new categories")
+                ? ArtStudioTxtBox.Text
+                : comboBox1.SelectedItem as string;
+
+            Directory.CreateDirectory("pictures/" + directory);
             for (int i = 0; i < _paths.Count; i++)
+            {
                 try
                 {
-                    File.Copy(_paths[i], directory + "/" + _fileNames[i]);
+                    File.Copy(_paths[i], "pictures/" + directory + "/" + _fileNames[i]);
                 }
                 catch (Exception)
                 {
                     MessageBox.Show(_fileNames[i] + " already Exist!!");
                 }
-                
-            
+                NeuralEngine.Instance.AddData(directory, "pictures/" + directory + "/" + _fileNames[i]);
+            }
+
+
             //Add the new data to the list by reloading all the list
-            NeuralEngine.Instance.ReloadData();
+            
         }
     }
 }

@@ -125,6 +125,7 @@
             this.Controls.Add(this.labelTitle);
             this.Name = "CheckCategoryForm";
             this.Text = "CheckCategoryForm";
+            this.Load += new System.EventHandler(this.CheckCategoryForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxArt)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

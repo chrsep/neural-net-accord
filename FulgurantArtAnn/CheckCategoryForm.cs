@@ -13,17 +13,7 @@ namespace FulgurantArtAnn
             StartPosition = FormStartPosition.CenterParent;
             InitializeComponent();
             _parentForm = parent;
-            var data = NeuralEngine.GetImages();
-            if (data.Count == 0)
-            {
-                MessageBox.Show("Add some art first!");
-                _parentForm.Show();
-                Close();
-            }
-            else
-            {
-                NeuralEngine.Instance.TrainClasificationNetwork();
-            }
+            
         }
 
         private void linkBack_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -47,6 +37,21 @@ namespace FulgurantArtAnn
             pictureBoxArt.Image = processedImage;
             var category = NeuralEngine.Instance.Classify(processedImage);
             labelCategory.Text = "Category: " + category;
+        }
+
+        private void CheckCategoryForm_Load(object sender, EventArgs e)
+        {
+            var data = NeuralEngine.GetImages();
+            if (data.Count == 0)
+            {
+                MessageBox.Show("Add some art first!");
+                _parentForm.Show();
+                Close();
+            }
+            else
+            {
+                NeuralEngine.Instance.TrainClasificationNetwork();
+            }
         }
     }
 }

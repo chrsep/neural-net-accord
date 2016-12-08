@@ -9,7 +9,6 @@ namespace FulgurantArtAnn
     {
         public MainForm()
         {
-            var initializeSingleton = NeuralEngine.Instance;
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
             
@@ -17,23 +16,24 @@ namespace FulgurantArtAnn
 
         private void buttonAddArt_Click(object sender, EventArgs e)
         {
+            Hide();
             var form = new AddArtForm(this);
             form.Show();
-            Hide();
         }
 
         private void buttonCheckCategory_Click(object sender, EventArgs e)
         {
-            var form = new CheckCategoryForm(this);
-            form.Show();
             Hide();
+            var form = new CheckCategoryForm(this);
+            form.Show();   
         }
 
         private void buttonBrowse_Click(object sender, EventArgs e)
         {
+            Hide();
             var form = new BrowseForm(this);
             form.Show();
-            Hide();
+            
         }
 
         private void linkExit_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -58,6 +58,7 @@ namespace FulgurantArtAnn
             {
                 CreateDirectory("pictures");
             }
+            var initializeSingleton = NeuralEngine.Instance;
         }
     }
 }
